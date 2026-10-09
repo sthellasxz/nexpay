@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexPay — Compare maquininhas de cartão</title>
+  <meta name="description" content="Compare taxas de todas as maquininhas de cartão e apps de celular e descubra a melhor opção para o seu negócio.">
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <style>
+    /* Parte verde ocupa a primeira tela inteira */
+    .hero {
+      background: var(--verde-escuro); color: var(--creme); position: relative; overflow: hidden;
+      min-height: calc(100vh - 68px); min-height: calc(100svh - 68px);
+      display: flex; align-items: center; padding: 48px 0;
+    }
+    .hero::before, .hero::after { content: ""; position: absolute; border-radius: 50%; border: 56px solid rgba(169, 207, 160, .10); }
+    .hero::before { width: 460px; height: 460px; right: -160px; top: -160px; }
+    .hero::after { width: 360px; height: 360px; left: -180px; bottom: -180px; }
+    .hero .container { position: relative; z-index: 1; text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .hero h1 { color: var(--creme); font-size: clamp(1.9rem, 3.6vw, 3rem); margin-bottom: 18px; }
+    .hero h1 span { color: var(--verde-claro); }
+    .hero p { font-size: 1.1rem; opacity: .9; max-width: 640px; }
+    .hero-botoes { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 12px; }
+    .hero-numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 100%; max-width: 640px; margin-top: 48px; }
+    .hero-numeros div { background: rgba(246, 240, 225, .08); border: 1px solid rgba(246, 240, 225, .15); border-radius: 18px; padding: 18px 12px; }
+    .hero-numeros b { display: block; font-family: var(--fonte-titulo); font-size: 2rem; color: var(--verde-claro); }
+    .hero-numeros span { font-size: .85rem; opacity: .85; }
+    .rolar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: var(--verde-claro); font-size: .85rem; text-decoration: none; opacity: .8; }
+    .rolar:hover { opacity: 1; }
+    .passos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .passo b { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--verde-escuro); color: var(--creme); font-family: var(--fonte-titulo); margin-bottom: 12px; }
+    @media (max-width: 760px) { .passos { grid-template-columns: 1fr; } }
+    .faixa-marcas { width: 100%; overflow: hidden; padding: 6px 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+    .faixa-trilho { display: flex; gap: 14px; width: max-content; animation: deslizar 40s linear infinite; }
+    .faixa-marcas:hover .faixa-trilho, .faixa-trilho:focus-within { animation-play-state: paused; }
+    .faixa-trilho a { display: flex; align-items: center; gap: 10px; white-space: nowrap; background: var(--branco-quente); border: 1px solid var(--creme-escuro); border-radius: 999px; padding: 12px 24px; text-decoration: none; color: var(--texto); font-weight: 600; font-size: 1.05rem; }
+    .faixa-trilho a:hover { border-color: var(--verde-medio); }
+    .faixa-trilho i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+    @keyframes deslizar { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 7px)); } }
+    @media (prefers-reduced-motion: reduce) {
+      .faixa-marcas { overflow-x: auto; }
+      .faixa-trilho { animation: none; }
+      .faixa-trilho [aria-hidden="true"] { display: none; }
+    }
+    .cta { background: var(--verde-palido); border-radius: 24px; padding: 40px 24px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <span class="selo">Comparador de maquininhas</span>
+        <h1>A maquininha <span>certa</span> para o seu negócio</h1>
+        <p>Reunimos as taxas de todas as principais marcas de maquininha de cartão e dos apps que transformam o celular em maquininha. Compare e receba uma recomendação feita para você.</p>
+        <div class="hero-botoes">
+          <a class="btn btn-claro" href="recomendacao.html">Encontrar minha maquininha</a>
+          <a class="btn btn-contorno-claro" href="catalogo.html">Ver catálogo</a>
+        </div>
+        <div class="hero-numeros">
+          <div><b id="n-marcas">—</b><span>marcas</span></div>
+          <div><b id="n-maquininhas">—</b><span>maquininhas</span></div>
+          <div><b id="n-apps">—</b><span>apps de celular</span></div>
+        </div>
+      </div>
+      <a class="rolar" href="#como-funciona">Role para ver mais ↓</a>
+    </section>
+
+    <section class="secao" id="como-funciona">
+      <div class="container">
+        <div class="secao-titulo">
+          <span class="selo">Como funciona</span>
+          <h2>Escolher maquininha em 3 passos</h2>
+        </div>
+        <div class="passos">
+          <div class="card passo"><b>1</b><h3>Conte sobre o seu negócio</h3><p class="texto-suave">Ramo, quanto você vende por mês, como seus clientes pagam e onde você vende.</p></div>
+          <div class="card passo"><b>2</b><h3>A gente calcula</h3><p class="texto-suave">Comparamos as taxas de cada maquininha com o seu jeito de vender e estimamos quanto você pagaria por mês.</p></div>
+          <div class="card passo"><b>3</b><h3>Escolha com segurança</h3><p class="texto-suave">Veja as melhores opções, compare lado a lado e confira todas as taxas antes de decidir.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="secao" style="padding-top:0">
+      <div class="container">
+        <div class="secao-titulo">
+          <span class="selo">Destaques</span>
+          <h2>Menores taxas no débito</h2>
+          <p>As opções com a menor taxa de débito cadastradas no NexPay.</p>
+        </div>
+        <div class="grade" id="destaques" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))"><p class="carregando">Carregando...</p></div>
+      </div>
+    </section>
+
+    <section class="secao" style="padding-top:0">
+      <div class="container">
+        <div class="secao-titulo">
+          <span class="selo">Marcas</span>
+          <h2>Todas as marcas em um só lugar</h2>
+        </div>
+      </div>
+      <!-- Faixa de ponta a ponta, em uma linha só, rolando devagar -->
+      <div class="faixa-marcas" aria-label="Marcas cadastradas">
+        <div class="faixa-trilho" id="faixa-marcas"></div>
+      </div>
+    </section>
+
+    <section class="container">
+      <div class="cta">
+        <h2>Não sabe qual escolher?</h2>
+        <p class="texto-suave">Responda algumas perguntas sobre o seu negócio e receba as melhores opções.</p>
+        <a class="btn" href="recomendacao.html">Usar o sistema de recomendação</a>
+      </div>
+    </section>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout } from './js/layout.js';
+    import { esc, cardMaquininha, organizarTaxas, SELECT_MAQUININHA } from './js/util.js';
+
+    iniciarLayout('inicio');
+
+    const [{ data: marcas }, { data: maquininhas, error }] = await Promise.all([
+      supabase.from('marcas').select('nome, slug, cor').order('nome'),
+      supabase.from('maquininhas').select(SELECT_MAQUININHA),
+    ]);
+
+    if (error) {
+      document.getElementById('destaques').innerHTML = '<p class="vazio">Não foi possível carregar os dados agora.</p>';
+    } else {
+      document.getElementById('n-marcas').textContent = marcas.length;
+      document.getElementById('n-maquininhas').textContent = maquininhas.filter((m) => m.tipo === 'maquininha').length;
+      document.getElementById('n-apps').textContent = maquininhas.filter((m) => m.tipo === 'celular').length;
+
+      // Uma opção por marca, ordenada pelo menor débito
+      const porMarca = new Map();
+      for (const m of maquininhas) {
+        const deb = organizarTaxas(m.taxas).debito ?? 99;
+        const atual = porMarca.get(m.marca_id);
+        if (!atual || deb < atual.deb) porMarca.set(m.marca_id, { m, deb });
+      }
+      const top = [...porMarca.values()].sort((a, b) => a.deb - b.deb).slice(0, 3).map((x) => x.m);
+      document.getElementById('destaques').innerHTML = top.map((m) => cardMaquininha(m)).join('');
+
+      // A lista aparece duas vezes para a faixa rolar sem emendas
+      const chipsMarcas = (oculto) => marcas.map((m) =>
+        `<a href="catalogo.html?marca=${encodeURIComponent(m.slug)}"${oculto ? ' aria-hidden="true" tabindex="-1"' : ''}><i style="background:${esc(m.cor)}"></i>${esc(m.nome)}</a>`).join('');
+      document.getElementById('faixa-marcas').innerHTML = chipsMarcas(false) + chipsMarcas(true);
+    }
+  </script>
+</body>
+</html>

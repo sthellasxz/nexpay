@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de maquininhas — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <style>
+    .catalogo { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
+    .filtros { position: sticky; top: 88px; }
+    .filtros h3 { font-size: 1rem; margin-top: 18px; }
+    .filtros h3:first-child { margin-top: 0; }
+    .filtros label.check { display: flex; align-items: center; gap: 8px; font-size: .92rem; padding: 3px 0; cursor: pointer; }
+    .barra-busca { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .barra-busca input { max-width: 380px; }
+    .barra-busca select { width: auto; }
+    @media (max-width: 900px) {
+      .catalogo { grid-template-columns: 1fr; }
+      .filtros { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container">
+      <span class="selo">Catálogo</span>
+      <h1>Catálogo de maquininhas</h1>
+      <p class="texto-suave">Todas as maquininhas e apps de celular cadastrados. Clique em <b>Comparar</b> em até 3 opções para ver lado a lado.</p>
+
+      <div class="chips" id="chips-marcas" style="margin:20px 0 24px"></div>
+
+      <div class="catalogo">
+        <aside class="card filtros" aria-label="Filtros">
+          <h3>Tipo</h3>
+          <label class="check"><input type="radio" name="tipo" value="" checked> Todos</label>
+          <label class="check"><input type="radio" name="tipo" value="maquininha"> Maquininhas</label>
+          <label class="check"><input type="radio" name="tipo" value="celular"> Apps no celular</label>
+
+          <h3>Recursos</h3>
+          <label class="check"><input type="checkbox" data-filtro="impressora"> Imprime comprovante</label>
+          <label class="check"><input type="checkbox" data-filtro="semCelular"> Funciona sem celular</label>
+          <label class="check"><input type="checkbox" data-filtro="chip"> Chip de internet</label>
+          <label class="check"><input type="checkbox" data-filtro="pix"> Aceita Pix</label>
+          <label class="check"><input type="checkbox" data-filtro="semAluguel"> Sem aluguel</label>
+
+          <h3>Débito máximo</h3>
+          <input type="range" id="max-debito" min="0.5" max="2.5" step="0.1" value="2.5" aria-label="Taxa de débito máxima">
+          <small class="texto-suave">Até <b id="max-debito-valor">2,5%</b></small>
+
+          <h3>Preço máximo</h3>
+          <select id="max-preco" aria-label="Preço máximo">
+            <option value="">Qualquer preço</option>
+            <option value="0">Grátis</option>
+            <option value="50">Até R$ 50</option>
+            <option value="100">Até R$ 100</option>
+            <option value="200">Até R$ 200</option>
+          </select>
+
+          <button class="btn btn-contorno btn-bloco btn-pequeno" id="limpar" style="margin-top:18px">Limpar filtros</button>
+        </aside>
+
+        <section>
+          <div class="barra-busca">
+            <input type="search" id="busca" placeholder="Buscar por nome ou empresa..." aria-label="Buscar por nome ou empresa">
+            <label class="texto-suave" style="font-size:.9rem">Ordenar por
+              <select id="ordem">
+                <option value="debito">Menor débito</option>
+                <option value="credito">Menor crédito à vista</option>
+                <option value="parcelado">Menor 12x</option>
+                <option value="preco">Menor preço</option>
+                <option value="nome">Nome</option>
+              </select>
+            </label>
+          </div>
+          <p class="texto-suave" id="contador" style="font-size:.9rem"></p>
+          <div class="grade" id="lista"><p class="carregando">Carregando catálogo...</p></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div class="barra-comparar oculto" id="barra-comparar">
+    <span id="texto-comparar"></span>
+    <a class="btn btn-claro btn-pequeno" id="ir-comparar" href="comparar.html">Comparar</a>
+  </div>
+
+  <dialog id="dialog-taxas" aria-labelledby="taxas-titulo">
+    <div class="dialog-corpo">
+      <div class="dialog-topo">
+        <div>
+          <span class="card-maq-marca" id="taxas-marca"></span>
+          <h2 id="taxas-titulo" style="margin:0"></h2>
+        </div>
+        <button type="button" class="fechar" id="fechar-taxas" aria-label="Fechar">×</button>
+      </div>
+      <div id="taxas-conteudo"></div>
+    </div>
+  </dialog>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout } from './js/layout.js';
+    import { esc, pct, brl, dataBr, cardMaquininha, organizarTaxas, taxaParcela, parametro, SELECT_MAQUININHA } from './js/util.js';
+
+    iniciarLayout('catalogo');
+
+    const [{ data: marcas }, { data: maquininhas, error }] = await Promise.all([
+      supabase.from('marcas').select('nome, slug').order('nome'),
+      supabase.from('maquininhas').select(SELECT_MAQUININHA),
+    ]);
+
+    const lista = document.getElementById('lista');
+    if (error) {
+      lista.innerHTML = '<p class="vazio">Não foi possível carregar o catálogo.</p>';
+      throw error;
+    }
+    for (const m of maquininhas) m.t = organizarTaxas(m.taxas);
+
+    let marcaAtiva = parametro('marca') || '';
+    const selecionadas = new Set();
+
+    // Chips de marca
+    const chips = document.getElementById('chips-marcas');
+    function desenharChips() {
+      chips.innerHTML = [{ nome: 'Todas', slug: '' }, ...marcas].map((m) =>
+        `<button class="chip ${m.slug === marcaAtiva ? 'ativo' : ''}" data-marca="${esc(m.slug)}">${esc(m.nome)}</button>`).join('');
+    }
+    chips.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-marca]');
+      if (!b) return;
+      marcaAtiva = b.dataset.marca;
+      history.replaceState(null, '', marcaAtiva ? `?marca=${marcaAtiva}` : 'catalogo.html');
+      desenharChips();
+      filtrar();
+    });
+
+    const valor = (id) => document.getElementById(id).value;
+    const marcado = (f) => document.querySelector(`[data-filtro="${f}"]`).checked;
+
+    function filtrar() {
+      const busca = valor('busca').trim().toLowerCase();
+      const tipo = document.querySelector('input[name="tipo"]:checked').value;
+      const maxDeb = Number(valor('max-debito'));
+      const maxPreco = valor('max-preco');
+      document.getElementById('max-debito-valor').textContent = maxDeb.toFixed(1).replace('.', ',') + '%';
+
+      let res = maquininhas.filter((m) =>
+        (!marcaAtiva || m.marcas.slug === marcaAtiva) &&
+        (!tipo || m.tipo === tipo) &&
+        (!busca || (m.modelo + ' ' + m.marcas.nome).toLowerCase().includes(busca)) &&
+        (!marcado('impressora') || m.imprime_comprovante) &&
+        (!marcado('semCelular') || !m.precisa_celular) &&
+        (!marcado('chip') || m.conexao.includes('chip')) &&
+        (!marcado('pix') || m.aceita_pix) &&
+        (!marcado('semAluguel') || Number(m.aluguel_mensal) === 0) &&
+        (maxDeb >= 2.5 || (m.t.debito ?? 99) <= maxDeb) &&
+        (maxPreco === '' || Number(m.preco) <= Number(maxPreco))
+      );
+
+      const chave = {
+        debito: (m) => m.t.debito ?? 99,
+        credito: (m) => m.t.credito_vista ?? 99,
+        parcelado: (m) => taxaParcela(m.t, 12).valor ?? 99,
+        preco: (m) => Number(m.preco) + Number(m.aluguel_mensal) * 12,
+      }[valor('ordem')];
+      res.sort(chave ? (a, b) => chave(a) - chave(b) : (a, b) => a.modelo.localeCompare(b.modelo));
+
+      document.getElementById('contador').textContent = `${res.length} resultado${res.length === 1 ? '' : 's'}`;
+      lista.innerHTML = res.length
+        ? res.map((m) => cardMaquininha(m, { comparar: true })).join('')
+        : '<p class="vazio">Nenhuma maquininha com esses filtros.</p>';
+      lista.querySelectorAll('[data-comparar]').forEach((c) => { c.checked = selecionadas.has(Number(c.dataset.comparar)); });
+    }
+
+    // Seleção para comparar (máximo 3)
+    lista.addEventListener('change', (e) => {
+      const c = e.target.closest('[data-comparar]');
+      if (!c) return;
+      const id = Number(c.dataset.comparar);
+      if (c.checked) {
+        if (selecionadas.size >= 3) { c.checked = false; alert('Você pode comparar até 3 maquininhas.'); return; }
+        selecionadas.add(id);
+      } else selecionadas.delete(id);
+      const barra = document.getElementById('barra-comparar');
+      barra.classList.toggle('oculto', selecionadas.size === 0);
+      document.getElementById('texto-comparar').textContent = `${selecionadas.size} selecionada${selecionadas.size > 1 ? 's' : ''}`;
+      document.getElementById('ir-comparar').href = 'comparar.html?ids=' + [...selecionadas].join(',');
+    });
+
+    // Botão "Ver taxas": abre a janela com todas as taxas da maquininha
+    const dialogTaxas = document.getElementById('dialog-taxas');
+    lista.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-ver-taxas]');
+      if (!b) return;
+      const m = maquininhas.find((x) => x.id === Number(b.dataset.verTaxas));
+      const parcelas = Array.from({ length: 11 }, (_, i) => ({ n: i + 2, ...taxaParcela(m.t, i + 2) }));
+      const linha = (nome, tx) => `<tr><td>${nome}</td>
+        <td class="num">${tx.valor == null ? '—' : pct(tx.valor) + (tx.estimada ? '*' : '')}</td>
+        <td class="num">${tx.valor == null ? '—' : brl(100 - tx.valor)}</td></tr>`;
+
+      document.getElementById('taxas-marca').textContent = m.marcas.nome;
+      document.getElementById('taxas-titulo').textContent = m.modelo;
+      document.getElementById('taxas-conteudo').innerHTML = `
+        <div class="tabela-rolagem">
+          <table>
+            <thead><tr><th>Forma de pagamento</th><th class="num">Taxa</th><th class="num">Recebe em R$ 100</th></tr></thead>
+            <tbody>
+              ${linha('Pix', { valor: m.t.pix })}
+              ${linha('Débito', { valor: m.t.debito })}
+              ${linha('Crédito à vista', { valor: m.t.credito_vista })}
+              ${parcelas.map((p) => linha(`Crédito ${p.n}x`, p)).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${parcelas.some((p) => p.estimada && p.valor != null) ? '<p class="texto-suave" style="font-size:.85rem;margin:8px 0 0">* Estimado: a empresa não divulga essa parcela; calculamos entre as taxas conhecidas.</p>' : ''}
+        ${!m.aceita_pix ? '<p class="texto-suave" style="font-size:.85rem;margin:4px 0 0">Esta maquininha não aceita Pix.</p>' : ''}
+        <p class="aviso" style="margin-top:14px">Recebimento: <b>${esc(m.prazo_recebimento || '—')}</b>. ${esc(m.observacao_taxas || '')} Taxas para Visa e Mastercard, pesquisadas em ${dataBr(m.taxas_atualizadas_em)}.</p>
+        <a class="btn btn-bloco" href="maquininha.html?slug=${encodeURIComponent(m.slug)}" style="margin-top:14px">Ver detalhes da maquininha</a>`;
+      dialogTaxas.showModal();
+    });
+    document.getElementById('fechar-taxas').addEventListener('click', () => dialogTaxas.close());
+    dialogTaxas.addEventListener('click', (e) => { if (e.target === dialogTaxas) dialogTaxas.close(); });
+
+    document.querySelectorAll('aside input, aside select, #busca, #ordem').forEach((el) => el.addEventListener('input', filtrar));
+    document.getElementById('limpar').addEventListener('click', () => {
+      document.querySelectorAll('aside input[type="checkbox"]').forEach((c) => { c.checked = false; });
+      document.querySelector('input[name="tipo"][value=""]').checked = true;
+      document.getElementById('max-debito').value = 2.5;
+      document.getElementById('max-preco').value = '';
+      filtrar();
+    });
+
+    desenharChips();
+    filtrar();
+  </script>
+</body>
+</html>

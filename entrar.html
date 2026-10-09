@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <style>
+    .caixa-login { max-width: 440px; margin: 0 auto; }
+    .abas { display: grid; grid-template-columns: 1fr 1fr; background: var(--creme-escuro); border-radius: 14px; padding: 4px; margin-bottom: 22px; }
+    .abas button { border: 0; background: none; padding: 10px; border-radius: 10px; font: 600 .95rem var(--fonte-titulo); color: var(--verde-escuro); cursor: pointer; }
+    .abas button.ativo { background: var(--branco-quente); box-shadow: 0 2px 6px rgba(0, 0, 0, .06); }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container">
+      <div class="card caixa-login">
+        <div style="text-align:center;margin-bottom:18px">
+          <img src="assets/img/logo-icone.svg" alt="" width="56" height="56">
+          <h1 style="font-size:1.6rem;margin-top:10px" id="titulo">Entrar na sua conta</h1>
+          <p class="texto-suave" style="font-size:.92rem">Com uma conta você vê todas as taxas, compara maquininhas e salva favoritas.</p>
+        </div>
+
+        <div class="abas" role="tablist">
+          <button type="button" class="ativo" data-aba="entrar" role="tab">Entrar</button>
+          <button type="button" data-aba="cadastrar" role="tab">Criar conta</button>
+        </div>
+
+        <div id="aviso"></div>
+        <form id="form">
+          <div class="campo oculto" id="campo-nome"><label for="nome">Nome</label><input id="nome" maxlength="100" autocomplete="name"></div>
+          <div class="campo"><label for="email">E-mail</label><input id="email" type="email" required autocomplete="email"></div>
+          <div class="campo">
+            <label for="senha">Senha</label>
+            <input id="senha" type="password" required minlength="6" autocomplete="current-password">
+            <small class="oculto" id="dica-senha">Mínimo de 6 caracteres.</small>
+          </div>
+          <button class="btn btn-bloco" type="submit" id="botao">Entrar</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout } from './js/layout.js';
+    import { parametro } from './js/util.js';
+
+    const usuario = await iniciarLayout('entrar');
+    // Só aceita voltar para páginas do próprio site
+    const voltar = (parametro('voltar') || 'conta.html').replace(/^[a-z]+:|^\/\//i, '');
+    if (usuario) location.href = voltar;
+
+    let aba = 'entrar';
+    const $ = (id) => document.getElementById(id);
+    const aviso = $('aviso');
+
+    document.querySelector('.abas').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-aba]');
+      if (!b) return;
+      aba = b.dataset.aba;
+      document.querySelectorAll('.abas button').forEach((x) => x.classList.toggle('ativo', x === b));
+      const cadastro = aba === 'cadastrar';
+      $('campo-nome').classList.toggle('oculto', !cadastro);
+      $('dica-senha').classList.toggle('oculto', !cadastro);
+      $('senha').autocomplete = cadastro ? 'new-password' : 'current-password';
+      $('titulo').textContent = cadastro ? 'Criar sua conta' : 'Entrar na sua conta';
+      $('botao').textContent = cadastro ? 'Criar conta' : 'Entrar';
+      aviso.innerHTML = '';
+    });
+
+    const traduzir = (msg) => ({
+      'Invalid login credentials': 'E-mail ou senha incorretos.',
+      'Email not confirmed': 'Confirme seu e-mail pelo link que enviamos antes de entrar.',
+      'User already registered': 'Já existe uma conta com esse e-mail.',
+    }[msg] || msg);
+
+    $('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = $('email').value.trim();
+      const senha = $('senha').value;
+      $('botao').disabled = true;
+      aviso.innerHTML = '';
+
+      if (aba === 'entrar') {
+        const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+        if (!error) { location.href = voltar; return; }
+        aviso.innerHTML = `<p class="mensagem mensagem-erro">${traduzir(error.message)}</p>`;
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email, password: senha, options: { data: { nome: $('nome').value.trim() } },
+        });
+        if (error) {
+          aviso.innerHTML = `<p class="mensagem mensagem-erro">${traduzir(error.message)}</p>`;
+        } else if (data.session) {
+          location.href = voltar;
+          return;
+        } else {
+          aviso.innerHTML = '<p class="mensagem mensagem-ok">Conta criada! Enviamos um link de confirmação para o seu e-mail.</p>';
+        }
+      }
+      $('botao').disabled = false;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel admin — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .abas-admin { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 24px; }
+    .numeros { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .numeros div { background: var(--verde-escuro); color: var(--creme); border-radius: 18px; padding: 18px; }
+    .numeros b { display: block; font-family: var(--fonte-titulo); font-size: 1.8rem; color: var(--verde-claro); }
+    .numeros span { font-size: .85rem; opacity: .85; }
+    .graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .graficos .card div { position: relative; height: 280px; }
+    @media (max-width: 860px) { .graficos { grid-template-columns: 1fr; } }
+    .barra-acoes { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .barra-acoes input { max-width: 300px; }
+    td .btn { margin-right: 4px; }
+    tr.nao-lida td { font-weight: 600; }
+    dialog form { padding: 28px; }
+    .grade-taxas { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+    .grade-taxas .campo { margin: 0; }
+    .grade-taxas input { padding: 8px 10px; }
+    .checks { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+    .checks label { display: flex; gap: 6px; align-items: center; font-size: .92rem; }
+    .msg-mensagem { white-space: normal; max-width: 420px; }
+    @media print {
+      .topo, .rodape, .abas-admin, .barra-acoes, .graficos, .numeros, .nao-imprimir { display: none !important; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container">
+      <span class="selo">Área administrativa</span>
+      <h1>Painel admin</h1>
+
+      <div class="abas-admin chips" role="tablist">
+        <button class="chip ativo" data-aba="relatorios">Relatórios</button>
+        <button class="chip" data-aba="maquininhas">Maquininhas</button>
+        <button class="chip" data-aba="marcas">Marcas</button>
+        <button class="chip" data-aba="contatos">Contatos <span id="n-nao-lidas"></span></button>
+        <button class="chip" data-aba="logs">Logs do registro</button>
+      </div>
+
+      <!-- Relatórios -->
+      <section data-painel="relatorios">
+        <div class="numeros" id="numeros"></div>
+        <div class="graficos">
+          <div class="card"><h3>Menor taxa de débito por marca</h3><div><canvas id="g-debito"></canvas></div></div>
+          <div class="card"><h3>Mais recomendadas</h3><div><canvas id="g-recomendadas"></canvas></div></div>
+        </div>
+        <div class="barra-acoes">
+          <h2 style="margin:0">Relatório das maquininhas</h2>
+          <div>
+            <button class="btn btn-contorno btn-pequeno" id="exportar-csv">Exportar CSV</button>
+            <button class="btn btn-pequeno" onclick="window.print()">Imprimir</button>
+          </div>
+        </div>
+        <div class="tabela-rolagem"><table id="tabela-relatorio"></table></div>
+      </section>
+
+      <!-- Maquininhas -->
+      <section data-painel="maquininhas" class="oculto">
+        <div class="barra-acoes">
+          <input type="search" id="busca-maq" placeholder="Buscar maquininha..." aria-label="Buscar maquininha">
+          <button class="btn" id="nova-maq">+ Nova maquininha</button>
+        </div>
+        <div class="tabela-rolagem"><table id="tabela-maq"></table></div>
+      </section>
+
+      <!-- Marcas -->
+      <section data-painel="marcas" class="oculto">
+        <div class="barra-acoes">
+          <span class="texto-suave">Excluir uma marca também exclui todas as maquininhas dela.</span>
+          <button class="btn" id="nova-marca">+ Nova marca</button>
+        </div>
+        <div class="tabela-rolagem"><table id="tabela-marcas"></table></div>
+      </section>
+
+      <!-- Contatos -->
+      <section data-painel="contatos" class="oculto">
+        <div class="tabela-rolagem"><table id="tabela-contatos"></table></div>
+      </section>
+
+      <!-- Logs -->
+      <section data-painel="logs" class="oculto">
+        <p class="texto-suave">Últimas 200 alterações em marcas, maquininhas e taxas, registradas automaticamente pelo banco.</p>
+        <div class="tabela-rolagem"><table id="tabela-logs"></table></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Formulário de maquininha -->
+  <dialog id="dialog-maq">
+    <form id="form-maq" method="dialog">
+      <div class="dialog-topo"><h2 id="titulo-maq" style="margin:0">Maquininha</h2><button type="button" class="fechar" data-fechar aria-label="Fechar">×</button></div>
+      <div id="aviso-maq"></div>
+      <div class="linha-campos">
+        <div class="campo"><label for="m-marca">Marca</label><select id="m-marca" required></select></div>
+        <div class="campo"><label for="m-modelo">Modelo</label><input id="m-modelo" required maxlength="100"></div>
+        <div class="campo"><label for="m-slug">Endereço (slug)</label><input id="m-slug" required pattern="[a-z0-9-]+" maxlength="120"><small>Só letras minúsculas, números e hífen.</small></div>
+        <div class="campo"><label for="m-tipo">Tipo</label><select id="m-tipo"><option value="maquininha">Maquininha</option><option value="celular">App no celular</option></select></div>
+      </div>
+      <div class="campo"><label for="m-descricao">Descrição</label><textarea id="m-descricao" style="min-height:70px"></textarea></div>
+      <div class="linha-campos">
+        <div class="campo"><label for="m-preco">Preço (R$)</label><input id="m-preco" type="number" min="0" step="0.01" value="0"></div>
+        <div class="campo"><label for="m-aluguel">Aluguel mensal (R$)</label><input id="m-aluguel" type="number" min="0" step="0.01" value="0"></div>
+        <div class="campo"><label for="m-prazo">Prazo de recebimento</label><input id="m-prazo" placeholder="Na hora, 1 dia útil..."></div>
+        <div class="campo"><label for="m-publico">Para quem</label><select id="m-publico"><option>PF e PJ</option><option>PF</option><option>PJ</option><option>PJ e MEI</option></select></div>
+        <div class="campo"><label for="m-volume">Volume de vendas indicado</label><select id="m-volume"><option value="pequeno">Pequeno</option><option value="medio">Médio</option><option value="grande">Grande</option></select></div>
+        <div class="campo"><label for="m-requisitos">Requisitos</label><input id="m-requisitos" placeholder="Ex.: Android com NFC"></div>
+      </div>
+      <span class="rotulo">Conexão e recursos</span>
+      <div class="checks" style="margin:8px 0 18px">
+        <label><input type="checkbox" data-conexao="chip"> Chip</label>
+        <label><input type="checkbox" data-conexao="wifi"> Wi-Fi</label>
+        <label><input type="checkbox" data-conexao="bluetooth"> Bluetooth</label>
+        <label><input type="checkbox" data-conexao="nfc"> Aproximação (NFC)</label>
+        <label><input type="checkbox" id="m-imprime"> Imprime comprovante</label>
+        <label><input type="checkbox" id="m-pix"> Aceita Pix</label>
+        <label><input type="checkbox" id="m-celular"> Precisa do celular</label>
+        <label><input type="checkbox" id="m-popular"> Popular</label>
+      </div>
+      <span class="rotulo">Taxas (%) — deixe em branco o que a empresa não divulga</span>
+      <div class="grade-taxas" style="margin:8px 0 18px" id="campos-taxas"></div>
+      <span class="rotulo">Indicada para</span>
+      <div class="checks" style="margin:8px 0 18px" id="m-tipos"></div>
+      <div class="linha-campos">
+        <div class="campo"><label for="m-pros">Vantagens (uma por linha)</label><textarea id="m-pros" style="min-height:90px"></textarea></div>
+        <div class="campo"><label for="m-contras">Desvantagens (uma por linha)</label><textarea id="m-contras" style="min-height:90px"></textarea></div>
+      </div>
+      <div class="campo"><label for="m-obs">Observação sobre as taxas</label><input id="m-obs"></div>
+      <div class="linha-campos">
+        <div class="campo"><label for="m-fonte">Fonte das taxas (link)</label><input id="m-fonte" type="url" placeholder="https://"></div>
+        <div class="campo"><label for="m-data">Taxas atualizadas em</label><input id="m-data" type="date"></div>
+      </div>
+      <button class="btn btn-bloco" type="submit">Salvar maquininha</button>
+    </form>
+  </dialog>
+
+  <!-- Formulário de marca -->
+  <dialog id="dialog-marca">
+    <form id="form-marca" method="dialog">
+      <div class="dialog-topo"><h2 id="titulo-marca" style="margin:0">Marca</h2><button type="button" class="fechar" data-fechar aria-label="Fechar">×</button></div>
+      <div id="aviso-marca"></div>
+      <div class="linha-campos">
+        <div class="campo"><label for="b-nome">Nome</label><input id="b-nome" required maxlength="100"></div>
+        <div class="campo"><label for="b-slug">Endereço (slug)</label><input id="b-slug" required pattern="[a-z0-9-]+"></div>
+        <div class="campo"><label for="b-grupo">Grupo / empresa dona</label><input id="b-grupo"></div>
+        <div class="campo"><label for="b-site">Site oficial</label><input id="b-site" type="url" placeholder="https://"></div>
+        <div class="campo"><label for="b-cor">Cor da marca</label><input id="b-cor" type="color" value="#1E4634" style="height:46px;padding:4px"></div>
+      </div>
+      <div class="campo"><label for="b-descricao">Descrição</label><textarea id="b-descricao" style="min-height:80px"></textarea></div>
+      <div class="campo"><label for="b-vantagens">Vantagens (uma por linha)</label><textarea id="b-vantagens" style="min-height:90px"></textarea></div>
+      <button class="btn btn-bloco" type="submit">Salvar marca</button>
+    </form>
+  </dialog>
+
+  <footer id="rodape"></footer>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

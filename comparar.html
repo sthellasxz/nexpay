@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparar maquininhas — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .seletores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0 28px; }
+    @media (max-width: 760px) { .seletores { grid-template-columns: 1fr; } }
+    .comparativo td:first-child { font-weight: 600; color: var(--verde-escuro); background: var(--creme); }
+    .comparativo th { text-align: center; }
+    .comparativo td:not(:first-child) { text-align: center; }
+    .cabeca-maq { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; }
+    .cabeca-maq svg { height: 70px; width: auto; }
+    .grafico-caixa { position: relative; height: 320px; }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container">
+      <span class="selo">Comparação</span>
+      <h1>Comparar maquininhas</h1>
+      <p class="texto-suave">Escolha até 3 opções para ver todas as taxas lado a lado. A menor taxa de cada linha fica em destaque.</p>
+
+      <div class="seletores" id="seletores"></div>
+      <div id="resultado"><p class="carregando">Carregando...</p></div>
+    </div>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout, exigirLogin } from './js/layout.js';
+    import { esc, pct, precoTexto, conexaoTexto, organizarTaxas, taxaParcela, desenhoDispositivo, parametro, SELECT_MAQUININHA } from './js/util.js';
+
+    await iniciarLayout('catalogo');
+    if (!(await exigirLogin())) throw new Error('login necessário');
+
+    const { data: maquininhas } = await supabase.from('maquininhas').select(SELECT_MAQUININHA).order('modelo');
+    for (const m of maquininhas) m.t = organizarTaxas(m.taxas);
+    const porId = new Map(maquininhas.map((m) => [m.id, m]));
+
+    let ids = (parametro('ids') || '').split(',').map(Number).filter((id) => porId.has(id)).slice(0, 3);
+    while (ids.length < 3) ids.push(0);
+
+    // Agrupa as opções por marca nos selects
+    const marcas = [...new Set(maquininhas.map((m) => m.marcas.nome))].sort();
+    const opcoes = (sel) => `<option value="0">— Escolher —</option>` + marcas.map((nome) =>
+      `<optgroup label="${esc(nome)}">${maquininhas.filter((m) => m.marcas.nome === nome).map((m) =>
+        `<option value="${m.id}" ${m.id === sel ? 'selected' : ''}>${esc(m.modelo)}</option>`).join('')}</optgroup>`).join('');
+
+    const seletores = document.getElementById('seletores');
+    seletores.innerHTML = ids.map((id, i) =>
+      `<select data-pos="${i}" aria-label="Maquininha ${i + 1}">${opcoes(id)}</select>`).join('');
+    seletores.addEventListener('change', (e) => {
+      ids[Number(e.target.dataset.pos)] = Number(e.target.value);
+      history.replaceState(null, '', '?ids=' + ids.filter(Boolean).join(','));
+      desenhar();
+    });
+
+    let grafico;
+    function desenhar() {
+      const lista = ids.filter(Boolean).map((id) => porId.get(id));
+      const resultado = document.getElementById('resultado');
+      if (!lista.length) {
+        resultado.innerHTML = '<p class="vazio">Escolha pelo menos uma maquininha acima.</p>';
+        return;
+      }
+
+      // Linha de taxa com destaque para a menor
+      const linhaTaxa = (rotulo, fn) => {
+        const valores = lista.map(fn);
+        const validos = valores.map((v) => v?.valor).filter((v) => v != null);
+        const menor = validos.length > 1 ? Math.min(...validos) : null;
+        return `<tr><td>${rotulo}</td>${valores.map((v) =>
+          `<td class="${v?.valor != null && v.valor === menor ? 'melhor' : ''}">${pct(v?.valor)}${v?.estimada && v?.valor != null ? '*' : ''}</td>`).join('')}</tr>`;
+      };
+      const linhaTexto = (rotulo, fn) => `<tr><td>${rotulo}</td>${lista.map((m) => `<td>${esc(fn(m))}</td>`).join('')}</tr>`;
+
+      resultado.innerHTML = `
+        <div class="tabela-rolagem">
+          <table class="comparativo">
+            <thead><tr><th></th>${lista.map((m) => `<th><div class="cabeca-maq">${desenhoDispositivo(m, m.marcas.cor)}
+              <a href="maquininha.html?slug=${encodeURIComponent(m.slug)}">${esc(m.modelo)}</a><small>${esc(m.marcas.nome)}</small></div></th>`).join('')}</tr></thead>
+            <tbody>
+              ${linhaTexto('Preço', precoTexto)}
+              ${linhaTexto('Recebimento', (m) => m.prazo_recebimento || '—')}
+              ${linhaTexto('Conexão', (m) => conexaoTexto(m.conexao))}
+              ${linhaTexto('Comprovante', (m) => (m.imprime_comprovante ? 'Impresso' : 'Digital'))}
+              ${linhaTexto('Para quem', (m) => m.publico || '—')}
+              ${linhaTaxa('Pix', (m) => ({ valor: m.t.pix }))}
+              ${linhaTaxa('Débito', (m) => ({ valor: m.t.debito }))}
+              ${linhaTaxa('Crédito à vista', (m) => ({ valor: m.t.credito_vista }))}
+              ${[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => linhaTaxa(`Crédito ${n}x`, (m) => taxaParcela(m.t, n))).join('')}
+            </tbody>
+          </table>
+        </div>
+        <p class="texto-suave" style="font-size:.85rem;margin-top:8px">* Estimado: a empresa não divulga essa parcela; calculamos entre as taxas conhecidas.</p>
+        <div class="card" style="margin-top:24px">
+          <h3>Gráfico comparativo de taxas no crédito</h3>
+          <div class="grafico-caixa"><canvas id="grafico"></canvas></div>
+        </div>`;
+
+      const cores = ['#1E4634', '#5C9A6E', '#C08A2E'];
+      if (grafico) grafico.destroy();
+      grafico = new Chart(document.getElementById('grafico'), {
+        type: 'line',
+        data: {
+          labels: Array.from({ length: 12 }, (_, i) => (i + 1) + 'x'),
+          datasets: lista.map((m, i) => ({
+            label: `${m.modelo} (${m.marcas.nome})`,
+            data: Array.from({ length: 12 }, (_, n) => taxaParcela(m.t, n + 1).valor),
+            borderColor: cores[i], backgroundColor: cores[i], tension: .25, pointRadius: 3,
+          })),
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: { tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${pct(c.parsed.y)}` } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => v + '%' } } },
+        },
+      });
+    }
+    desenhar();
+  </script>
+</body>
+</html>

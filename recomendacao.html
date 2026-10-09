@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recomendação de maquininha — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <style>
+    .form-rec { max-width: 860px; margin: 0 auto; }
+    .form-rec fieldset { border: 0; padding: 0; margin: 0 0 22px; }
+    .form-rec legend { font-family: var(--fonte-titulo); font-weight: 600; color: var(--verde-escuro); margin-bottom: 10px; }
+    .mix { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 24px; }
+    .mix label { display: flex; justify-content: space-between; font-size: .9rem; font-weight: 600; }
+    .mix b { color: var(--verde); }
+    @media (max-width: 640px) { .mix { grid-template-columns: 1fr; } }
+    .podio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .podio { grid-template-columns: 1fr; } }
+    .rec { display: flex; flex-direction: column; gap: 12px; position: relative; }
+    .rec.primeira { border: 2px solid var(--verde-escuro); }
+    .rec-posicao { position: absolute; top: -12px; left: 20px; background: var(--verde-escuro); color: var(--creme); font-size: .78rem; font-weight: 600; padding: 3px 12px; border-radius: 999px; }
+    .rec-topo { display: flex; gap: 14px; align-items: center; }
+    .rec-topo svg { height: 86px; width: auto; flex-shrink: 0; }
+    .compat { font-family: var(--fonte-titulo); font-size: 2rem; color: var(--verde); font-weight: 700; line-height: 1; }
+    .barra { height: 8px; background: var(--creme-escuro); border-radius: 999px; overflow: hidden; }
+    .barra i { display: block; height: 100%; background: var(--verde-medio); }
+    .custos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .custos div { background: var(--creme); border-radius: 12px; padding: 8px 12px; }
+    .custos span { display: block; font-size: .75rem; color: var(--texto-suave); }
+    .custos b { font-family: var(--fonte-titulo); color: var(--verde-escuro); }
+    .motivos { margin: 0; padding-left: 18px; font-size: .9rem; }
+    .rec .btn { margin-top: auto; }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container">
+      <div class="secao-titulo">
+        <span class="selo">Recomendação inteligente</span>
+        <h1>Qual maquininha combina com você?</h1>
+        <p>Conte um pouco sobre o seu negócio. A gente calcula quanto você pagaria em cada maquininha e mostra as melhores opções.</p>
+      </div>
+
+      <form class="card form-rec" id="form">
+        <fieldset>
+          <legend>Sobre o seu negócio</legend>
+          <div class="linha-campos">
+            <div class="campo">
+              <label for="tipo-negocio">Tipo de negócio</label>
+              <select id="tipo-negocio" required><option value="">Carregando...</option></select>
+            </div>
+            <div class="campo">
+              <label for="pessoa">Você vende como</label>
+              <select id="pessoa" required>
+                <option value="PF">Pessoa física (CPF)</option>
+                <option value="MEI">MEI</option>
+                <option value="PJ">Empresa (CNPJ)</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="faturamento">Quanto você vende por mês no cartão e Pix? (R$)</label>
+              <input type="number" id="faturamento" min="100" step="100" value="5000" required>
+            </div>
+            <div class="campo">
+              <label for="ticket">Valor médio de cada venda (R$)</label>
+              <input type="number" id="ticket" min="1" step="1" value="50">
+              <small id="vendas-mes"></small>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Como seus clientes pagam?</legend>
+          <div class="mix">
+            <div><label for="mix-debito">Débito <b data-mix="debito"></b></label><input type="range" id="mix-debito" min="0" max="100" value="35"></div>
+            <div><label for="mix-credito">Crédito à vista <b data-mix="credito"></b></label><input type="range" id="mix-credito" min="0" max="100" value="25"></div>
+            <div><label for="mix-parcelado">Crédito parcelado <b data-mix="parcelado"></b></label><input type="range" id="mix-parcelado" min="0" max="100" value="15"></div>
+            <div><label for="mix-pix">Pix <b data-mix="pix"></b></label><input type="range" id="mix-pix" min="0" max="100" value="25"></div>
+          </div>
+          <div class="campo" style="margin-top:14px;max-width:320px">
+            <label for="parcelas">Quando parcelam, em quantas vezes costuma ser?</label>
+            <select id="parcelas">
+              <option value="2">2x</option><option value="3" selected>3x</option><option value="4">4x</option>
+              <option value="6">6x</option><option value="10">10x</option><option value="12">12x</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Onde você vende?</legend>
+          <div class="opcoes">
+            <label class="opcao"><input type="radio" name="local" value="loja" checked><span>Loja ou ponto fixo</span></label>
+            <label class="opcao"><input type="radio" name="local" value="rua"><span>Na rua, feiras ou eventos</span></label>
+            <label class="opcao"><input type="radio" name="local" value="entregas"><span>Em entregas</span></label>
+            <label class="opcao"><input type="radio" name="local" value="varios"><span>Em vários lugares</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Conexão</legend>
+          <div class="opcoes">
+            <label class="opcao"><input type="radio" name="conectividade" value="wifi" checked><span>Tenho Wi-Fi no local</span></label>
+            <label class="opcao"><input type="radio" name="conectividade" value="chip"><span>Preciso de chip com internet</span></label>
+            <label class="opcao"><input type="radio" name="conectividade" value="celular"><span>Quero usar meu celular</span></label>
+          </div>
+        </fieldset>
+
+        <div class="linha-campos">
+          <div class="campo">
+            <label for="orcamento">Quanto pode gastar para comprar a maquininha? (R$)</label>
+            <input type="number" id="orcamento" min="0" step="10" placeholder="Deixe em branco se não tiver limite">
+          </div>
+          <div class="campo">
+            <label for="prioridade">O que é mais importante para você?</label>
+            <select id="prioridade">
+              <option value="taxa">Pagar a menor taxa</option>
+              <option value="rapido">Receber o dinheiro rápido</option>
+              <option value="investimento">Gastar pouco para começar</option>
+              <option value="semCelular">Não depender do celular</option>
+            </select>
+          </div>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;margin-bottom:20px">
+          <input type="checkbox" id="impressora"> Preciso imprimir o comprovante para o cliente
+        </label>
+
+        <button class="btn btn-bloco" type="submit">Encontrar minha maquininha ideal</button>
+      </form>
+
+      <section id="resultado" class="oculto" style="margin-top:48px" aria-live="polite"></section>
+    </div>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout } from './js/layout.js';
+    import { recomendar } from './js/recomendacao.js';
+    import { esc, pct, brl, organizarTaxas, desenhoDispositivo, precoTexto } from './js/util.js';
+
+    const usuario = await iniciarLayout('recomendacao');
+
+    const [{ data: tipos }, { data: maquininhas }] = await Promise.all([
+      supabase.from('tipos_negocio').select('nome, slug').order('nome'),
+      supabase.from('maquininhas').select('*, marcas(nome, cor), taxas(tipo, parcelas, valor), maquininha_tipo_negocio(tipos_negocio(slug))'),
+    ]);
+    for (const m of maquininhas || []) m.t = organizarTaxas(m.taxas);
+
+    document.getElementById('tipo-negocio').innerHTML = '<option value="">Selecione</option>' +
+      (tipos || []).map((t) => `<option value="${esc(t.slug)}">${esc(t.nome)}</option>`).join('');
+
+    const $ = (id) => document.getElementById(id);
+
+    // Mostra os percentuais normalizados (sempre somam 100%)
+    function lerMix() {
+      const bruto = { debito: +$('mix-debito').value, credito: +$('mix-credito').value, parcelado: +$('mix-parcelado').value, pix: +$('mix-pix').value };
+      const soma = Object.values(bruto).reduce((a, b) => a + b, 0) || 1;
+      const mix = {};
+      for (const k in bruto) mix[k] = (bruto[k] / soma) * 100;
+      document.querySelectorAll('[data-mix]').forEach((b) => { b.textContent = Math.round(mix[b.dataset.mix]) + '%'; });
+      return mix;
+    }
+    function vendasMes() {
+      const n = Math.round(+$('faturamento').value / Math.max(+$('ticket').value, 1));
+      $('vendas-mes').textContent = n ? `Cerca de ${n} vendas por mês` : '';
+    }
+    document.querySelectorAll('.mix input').forEach((i) => i.addEventListener('input', lerMix));
+    ['faturamento', 'ticket'].forEach((id) => $(id).addEventListener('input', vendasMes));
+    lerMix(); vendasMes();
+
+    $('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const respostas = {
+        tipoNegocio: $('tipo-negocio').value,
+        pessoa: $('pessoa').value,
+        faturamento: Number($('faturamento').value),
+        ticket: Number($('ticket').value) || null,
+        mix: lerMix(),
+        parcelasMedias: Number($('parcelas').value),
+        local: document.querySelector('input[name="local"]:checked').value,
+        conectividade: document.querySelector('input[name="conectividade"]:checked').value,
+        orcamento: $('orcamento').value === '' ? null : Number($('orcamento').value),
+        prioridade: $('prioridade').value,
+        impressora: $('impressora').checked,
+      };
+
+      const ranking = recomendar(maquininhas, respostas);
+      const resultado = $('resultado');
+      resultado.classList.remove('oculto');
+
+      if (!ranking.length) {
+        resultado.innerHTML = `<div class="card vazio"><h2>Nenhuma maquininha atende a tudo isso</h2>
+          <p>Tente aumentar o orçamento ou desmarcar alguma exigência, como a impressora.</p></div>`;
+        resultado.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
+      const top = ranking.slice(0, 3);
+      resultado.innerHTML = `
+        <div class="secao-titulo">
+          <span class="selo">Resultado</span>
+          <h2>As melhores opções para você</h2>
+          <p>Com vendas de ${brl(respostas.faturamento)} por mês, considerando como seus clientes pagam.</p>
+        </div>
+        <div class="podio">${top.map((l, i) => `
+          <article class="card rec ${i === 0 ? 'primeira' : ''}">
+            <span class="rec-posicao">${i === 0 ? 'Melhor escolha' : i + 1 + 'º lugar'}</span>
+            <div class="rec-topo">
+              ${desenhoDispositivo(l.m, l.m.marcas.cor)}
+              <div>
+                <span class="card-maq-marca">${esc(l.m.marcas.nome)}</span>
+                <h3 style="margin:2px 0 6px">${esc(l.m.modelo)}</h3>
+                <span class="compat">${l.compatibilidade}%</span> <small class="texto-suave">compatível</small>
+              </div>
+            </div>
+            <div class="barra"><i style="width:${l.compatibilidade}%"></i></div>
+            <div class="custos">
+              <div><span>Custo por mês</span><b>${brl(l.custo.total)}</b></div>
+              <div><span>Taxa média</span><b>${pct(l.custo.taxaMedia)}</b></div>
+              <div><span>Maquininha</span><b>${esc(precoTexto(l.m))}</b></div>
+              <div><span>Custo em 1 ano</span><b>${brl(Number(l.m.preco) + l.custo.total * 12)}</b></div>
+            </div>
+            <ul class="motivos">${[...new Set(l.motivos)].slice(0, 4).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+            <a class="btn" href="maquininha.html?slug=${encodeURIComponent(l.m.slug)}">Ver todas as taxas</a>
+          </article>`).join('')}
+        </div>
+
+        <h3 style="margin-top:40px">Ranking completo</h3>
+        <div class="tabela-rolagem">
+          <table>
+            <thead><tr><th>#</th><th>Maquininha</th><th class="num">Compatível</th><th class="num">Custo por mês</th><th class="num">Taxa média</th><th>Recebimento</th></tr></thead>
+            <tbody>${ranking.slice(0, 15).map((l, i) => `<tr>
+              <td>${i + 1}</td>
+              <td><a href="maquininha.html?slug=${encodeURIComponent(l.m.slug)}">${esc(l.m.modelo)}</a> <small class="texto-suave">${esc(l.m.marcas.nome)}</small></td>
+              <td class="num">${l.compatibilidade}%</td>
+              <td class="num">${brl(l.custo.total)}</td>
+              <td class="num">${pct(l.custo.taxaMedia)}</td>
+              <td>${esc(l.m.prazo_recebimento || '—')}</td></tr>`).join('')}</tbody>
+          </table>
+        </div>
+        <p class="aviso" style="margin-top:16px">Estimativa feita com as taxas de referência cadastradas no NexPay (bandeiras Visa e Mastercard). As taxas reais podem mudar conforme o plano e a negociação com cada empresa.</p>`;
+      resultado.scrollIntoView({ behavior: 'smooth' });
+
+      // Registra a recomendação (logs_recomendacoes)
+      const melhor = top[0];
+      await supabase.from('logs_recomendacoes').insert({
+        usuario_id: usuario?.id ?? null,
+        tipo_negocio: respostas.tipoNegocio,
+        faturamento_mensal: respostas.faturamento,
+        ticket_medio: respostas.ticket,
+        local_venda: respostas.local,
+        conectividade: respostas.conectividade,
+        orcamento: respostas.orcamento,
+        prioridade: respostas.prioridade,
+        mix_pagamentos: Object.fromEntries(Object.entries(respostas.mix).map(([k, v]) => [k, Math.round(v)])),
+        maquininha_recomendada_id: melhor.m.id,
+        pontuacao: melhor.pontuacao,
+        compatibilidade: melhor.compatibilidade,
+        custo_mensal_estimado: Math.round(melhor.custo.total * 100) / 100,
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maquininha — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .detalhe-topo { display: grid; grid-template-columns: 300px 1fr; gap: 32px; align-items: center; }
+    .detalhe-imagem { background: var(--verde-palido); border-radius: 24px; padding: 32px; display: flex; justify-content: center; }
+    .detalhe-imagem svg { height: 220px; width: auto; }
+    .infos { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin: 16px 0; }
+    .infos div { background: var(--branco-quente); border: 1px solid var(--creme-escuro); border-radius: 14px; padding: 10px 14px; }
+    .infos span { display: block; font-size: .75rem; color: var(--texto-suave); }
+    .infos b { font-size: .95rem; }
+    .taxas-grandes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .taxas-grandes div { background: var(--verde-escuro); color: var(--creme); border-radius: 18px; padding: 18px; text-align: center; }
+    .taxas-grandes b { display: block; font-family: var(--fonte-titulo); font-size: 1.6rem; color: var(--verde-claro); }
+    .taxas-grandes span { font-size: .85rem; opacity: .85; }
+    .bloqueado { text-align: center; padding: 36px 24px; background: var(--verde-palido); border-radius: 20px; }
+    .lista-pc { margin: 0; padding-left: 20px; }
+    .lista-pc.pros li::marker { content: "✓  "; color: var(--verde); }
+    .lista-pc.contras li::marker { content: "✕  "; color: #9B2C2C; }
+    .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+    .grafico-caixa { position: relative; height: 280px; }
+    .detalhe-topo > *, .grade-2 > * { min-width: 0; }
+    #simulacao td { white-space: normal; padding: 9px 8px; }
+    @media (max-width: 760px) {
+      .detalhe-topo { grid-template-columns: 1fr; }
+      .taxas-grandes { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container" id="conteudo"><p class="carregando">Carregando...</p></div>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout } from './js/layout.js';
+    import { esc, pct, brl, dataBr, precoTexto, conexaoTexto, organizarTaxas, taxaParcela, desenhoDispositivo, parametro } from './js/util.js';
+
+    const usuario = await iniciarLayout('catalogo');
+    const conteudo = document.getElementById('conteudo');
+
+    const { data: m, error } = await supabase
+      .from('maquininhas')
+      .select(`*, marcas(nome, slug, cor, site_url), taxas(tipo, parcelas, valor),
+               especificacoes(tipo, valor), maquininha_recursos(recursos(nome)),
+               maquininha_tipo_negocio(tipos_negocio(nome))`)
+      .eq('slug', parametro('slug') || '')
+      .maybeSingle();
+
+    if (error || !m) {
+      conteudo.innerHTML = `<div class="vazio"><h2>Maquininha não encontrada</h2><a class="btn" href="catalogo.html">Voltar ao catálogo</a></div>`;
+      throw error || new Error('não encontrada');
+    }
+
+    document.title = `${m.modelo} (${m.marcas.nome}) — NexPay`;
+    const t = organizarTaxas(m.taxas);
+    const doze = taxaParcela(t, 12);
+
+    conteudo.innerHTML = `
+      <p style="font-size:.9rem"><a href="catalogo.html">Catálogo</a> › <a href="catalogo.html?marca=${esc(m.marcas.slug)}">${esc(m.marcas.nome)}</a> › ${esc(m.modelo)}</p>
+
+      <section class="detalhe-topo">
+        <div class="detalhe-imagem">${desenhoDispositivo(m, m.marcas.cor)}</div>
+        <div>
+          <span class="selo">${m.tipo === 'celular' ? 'App no celular' : 'Maquininha'} · ${esc(m.marcas.nome)}</span>
+          <h1>${esc(m.modelo)}</h1>
+          <p class="texto-suave">${esc(m.descricao)}</p>
+          <div class="infos">
+            <div><span>Preço</span><b>${esc(precoTexto(m))}</b></div>
+            <div><span>Recebimento</span><b>${esc(m.prazo_recebimento || '—')}</b></div>
+            <div><span>Conexão</span><b>${esc(conexaoTexto(m.conexao))}</b></div>
+            <div><span>Comprovante</span><b>${m.imprime_comprovante ? 'Impresso' : 'Digital'}</b></div>
+            <div><span>Para quem</span><b>${esc(m.publico || '—')}</b></div>
+            ${m.requisitos ? `<div><span>Requisitos</span><b>${esc(m.requisitos)}</b></div>` : ''}
+          </div>
+          <div class="acoes">
+            <button class="btn" id="favoritar">♡ Favoritar</button>
+            <a class="btn btn-contorno" href="comparar.html?ids=${m.id}">Comparar com outras</a>
+            ${m.marcas.site_url ? `<a class="btn btn-contorno" href="${esc(m.marcas.site_url)}" target="_blank" rel="noopener">Site oficial ↗</a>` : ''}
+          </div>
+        </div>
+      </section>
+
+      <section style="margin-top:40px">
+        <h2>Taxas principais</h2>
+        <div class="taxas-grandes">
+          <div><b>${pct(t.debito)}</b><span>Débito</span></div>
+          <div><b>${pct(t.credito_vista)}</b><span>Crédito à vista</span></div>
+          <div><b>${t.pix == null ? (m.aceita_pix ? '—' : 'Não aceita') : pct(t.pix)}</b><span>Pix</span></div>
+          <div><b>${pct(doze.valor)}</b><span>Crédito 12x${doze.estimada ? ' (estimado)' : ''}</span></div>
+        </div>
+        <p class="aviso" style="margin-top:14px">${esc(m.observacao_taxas || '')} Taxas para Visa e Mastercard, pesquisadas em ${dataBr(m.taxas_atualizadas_em)}.
+          ${m.fonte_url ? `Fonte: <a href="${esc(m.fonte_url)}" target="_blank" rel="noopener">${esc(new URL(m.fonte_url).hostname)}</a>.` : ''}
+          Confira sempre no site oficial antes de contratar.</p>
+      </section>
+
+      <section style="margin-top:40px" id="secao-completa"></section>
+
+      <section class="grade-2" style="margin-top:40px">
+        <div class="card"><h3>Vantagens</h3><ul class="lista-pc pros">${m.pros.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>
+        <div class="card"><h3>Desvantagens</h3><ul class="lista-pc contras">${m.contras.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></div>
+      </section>
+
+      <section class="grade-2" style="margin-top:24px">
+        <div class="card">
+          <h3>Recursos</h3>
+          <div class="chips">${m.maquininha_recursos.map((r) => `<span class="etiqueta">${esc(r.recursos.nome)}</span>`).join('')}</div>
+          <h3 style="margin-top:20px">Indicada para</h3>
+          <div class="chips">${m.maquininha_tipo_negocio.map((r) => `<span class="etiqueta etiqueta-creme">${esc(r.tipos_negocio.nome)}</span>`).join('')}</div>
+        </div>
+        <div class="card">
+          <h3>Simule uma venda</h3>
+          <div class="campo"><label for="valor-venda">Valor da venda (R$)</label><input type="number" id="valor-venda" value="100" min="1" step="0.01"></div>
+          <div id="simulacao"></div>
+        </div>
+      </section>`;
+
+    // Tabela completa + gráfico: só para quem fez login
+    const completa = document.getElementById('secao-completa');
+    if (!usuario) {
+      completa.innerHTML = `<div class="bloqueado">
+        <h3>Tabela completa de parcelas</h3>
+        <p class="texto-suave">Entre ou crie uma conta grátis para ver todas as taxas de 2x a 12x, o gráfico e comparar maquininhas.</p>
+        <a class="btn" href="entrar.html?voltar=${encodeURIComponent('maquininha.html?slug=' + m.slug)}">Entrar para ver</a>
+      </div>`;
+    } else {
+      const linhas = Array.from({ length: 11 }, (_, i) => i + 2).map((n) => ({ n, ...taxaParcela(t, n) }));
+      completa.innerHTML = `<h2>Crédito parcelado</h2>
+        <div class="grade-2">
+          <div class="tabela-rolagem">
+            <table>
+              <thead><tr><th>Parcelas</th><th class="num">Taxa</th><th class="num">Você recebe em R$ 100</th></tr></thead>
+              <tbody>${linhas.map((l) => `<tr><td>${l.n}x</td>
+                <td class="num">${pct(l.valor)}${l.estimada && l.valor != null ? '*' : ''}</td>
+                <td class="num">${l.valor == null ? '—' : brl(100 - l.valor)}</td></tr>`).join('')}</tbody>
+            </table>
+          </div>
+          <div class="card"><div class="grafico-caixa"><canvas id="grafico"></canvas></div></div>
+        </div>
+        ${linhas.some((l) => l.estimada) ? '<p class="texto-suave" style="font-size:.85rem;margin-top:8px">* Estimado: a empresa não divulga essa parcela; calculamos entre as taxas conhecidas.</p>' : ''}`;
+
+      new Chart(document.getElementById('grafico'), {
+        type: 'line',
+        data: {
+          labels: ['1x', ...linhas.map((l) => l.n + 'x')],
+          datasets: [{
+            label: 'Taxa (%)',
+            data: [t.credito_vista, ...linhas.map((l) => l.valor)],
+            borderColor: '#2F6B4F', backgroundColor: 'rgba(92,154,110,.15)', fill: true, tension: .25, pointRadius: 3,
+          }],
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => pct(c.parsed.y) } } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => v + '%' } } },
+        },
+      });
+    }
+
+    // Simulador de venda
+    const seis = taxaParcela(t, 6);
+    function simular() {
+      const valor = Number(document.getElementById('valor-venda').value) || 0;
+      const linhas = [
+        ['Débito', t.debito], ['Crédito à vista', t.credito_vista], ['Pix', t.pix],
+        [`Crédito 6x${seis.estimada ? ' (estimado)' : ''}`, seis.valor],
+        [`Crédito 12x${doze.estimada ? ' (estimado)' : ''}`, doze.valor],
+      ].filter(([, tx]) => tx != null);
+      document.getElementById('simulacao').innerHTML = `<table><tbody>${linhas.map(([nome, tx]) =>
+        `<tr><td>${nome}</td><td class="num">− ${brl(valor * tx / 100)}</td><td class="num melhor">${brl(valor - valor * tx / 100)}</td></tr>`).join('')}</tbody></table>`;
+    }
+    document.getElementById('valor-venda').addEventListener('input', simular);
+    simular();
+
+    // Favoritos
+    const botaoFav = document.getElementById('favoritar');
+    let favorito = false;
+    function atualizarFav() { botaoFav.textContent = favorito ? '♥ Favoritada' : '♡ Favoritar'; }
+    if (usuario) {
+      const { data } = await supabase.from('favoritos').select('maquininha_id').eq('maquininha_id', m.id).maybeSingle();
+      favorito = !!data;
+      atualizarFav();
+    }
+    botaoFav.addEventListener('click', async () => {
+      if (!usuario) { location.href = 'entrar.html?voltar=' + encodeURIComponent('maquininha.html?slug=' + m.slug); return; }
+      botaoFav.disabled = true;
+      const { error } = favorito
+        ? await supabase.from('favoritos').delete().eq('maquininha_id', m.id).eq('usuario_id', usuario.id)
+        : await supabase.from('favoritos').insert({ usuario_id: usuario.id, maquininha_id: m.id });
+      if (!error) favorito = !favorito;
+      atualizarFav();
+      botaoFav.disabled = false;
+    });
+  </script>
+</body>
+</html>

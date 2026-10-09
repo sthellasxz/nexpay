@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contato — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container grade-2" style="align-items:start">
+      <div>
+        <span class="selo">Contato</span>
+        <h1>Fale com a gente</h1>
+        <p class="texto-suave">Encontrou uma taxa desatualizada, quer sugerir uma maquininha ou tem alguma dúvida? Mande sua mensagem.</p>
+        <div class="card" style="margin-top:24px">
+          <h3>Sobre as taxas</h3>
+          <p class="texto-suave" style="margin:0">As taxas do NexPay são pesquisadas nos sites oficiais e em comparadores. Elas mudam com frequência, por isso toda sugestão de atualização ajuda.</p>
+        </div>
+      </div>
+
+      <form class="card" id="form" novalidate>
+        <div id="aviso"></div>
+        <div class="campo"><label for="nome">Nome</label><input id="nome" required minlength="2" maxlength="100" autocomplete="name"></div>
+        <div class="campo"><label for="email">E-mail</label><input id="email" type="email" required maxlength="150" autocomplete="email"></div>
+        <div class="campo">
+          <label for="assunto">Assunto</label>
+          <select id="assunto">
+            <option>Dúvida</option>
+            <option>Sugestão de maquininha</option>
+            <option>Taxa desatualizada</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="campo"><label for="mensagem">Mensagem</label><textarea id="mensagem" required minlength="5" maxlength="3000"></textarea></div>
+        <button class="btn btn-bloco" type="submit">Enviar mensagem</button>
+      </form>
+    </div>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout } from './js/layout.js';
+
+    const usuario = await iniciarLayout('contato');
+    const form = document.getElementById('form');
+    const aviso = document.getElementById('aviso');
+    if (usuario) {
+      document.getElementById('email').value = usuario.email;
+      document.getElementById('nome').value = usuario.nome !== usuario.email ? usuario.nome : '';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        aviso.innerHTML = '<p class="mensagem mensagem-erro">Preencha nome, um e-mail válido e uma mensagem de pelo menos 5 letras.</p>';
+        form.reportValidity();
+        return;
+      }
+      const botao = form.querySelector('button');
+      botao.disabled = true;
+      const { error } = await supabase.from('contatos').insert({
+        nome: document.getElementById('nome').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        assunto: document.getElementById('assunto').value,
+        mensagem: document.getElementById('mensagem').value.trim(),
+      });
+      botao.disabled = false;
+      if (error) {
+        aviso.innerHTML = '<p class="mensagem mensagem-erro">Não foi possível enviar agora. Tente de novo em instantes.</p>';
+      } else {
+        form.reset();
+        aviso.innerHTML = '<p class="mensagem mensagem-ok">Mensagem enviada! Obrigado pelo contato.</p>';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minha conta — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px">
+        <div>
+          <span class="selo">Área do usuário</span>
+          <h1 id="ola">Minha conta</h1>
+        </div>
+        <button class="btn btn-contorno" id="sair">Sair</button>
+      </div>
+
+      <section class="grade-2" style="margin-top:24px;align-items:start">
+        <form class="card" id="form-nome">
+          <h3>Meus dados</h3>
+          <div id="aviso"></div>
+          <div class="campo"><label for="nome">Nome</label><input id="nome" maxlength="100" required></div>
+          <div class="campo"><label for="email">E-mail</label><input id="email" disabled></div>
+          <button class="btn" type="submit">Salvar</button>
+        </form>
+        <div class="card">
+          <h3>Minhas recomendações</h3>
+          <div id="historico"><p class="texto-suave">Carregando...</p></div>
+        </div>
+      </section>
+
+      <section style="margin-top:40px">
+        <h2>Maquininhas favoritas</h2>
+        <div class="grade" id="favoritos"><p class="carregando">Carregando...</p></div>
+      </section>
+    </div>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout, exigirLogin } from './js/layout.js';
+    import { esc, brl, dataBr, cardMaquininha, SELECT_MAQUININHA } from './js/util.js';
+
+    await iniciarLayout('conta');
+    const usuario = await exigirLogin();
+    if (!usuario) throw new Error('login necessário');
+
+    const $ = (id) => document.getElementById(id);
+    $('ola').textContent = `Olá, ${usuario.nome}!`;
+    $('nome').value = usuario.nome;
+    $('email').value = usuario.email;
+
+    $('form-nome').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const { error } = await supabase.from('perfis').update({ nome: $('nome').value.trim() }).eq('id', usuario.id);
+      $('aviso').innerHTML = error
+        ? '<p class="mensagem mensagem-erro">Não foi possível salvar.</p>'
+        : '<p class="mensagem mensagem-ok">Nome atualizado.</p>';
+      if (!error) $('ola').textContent = `Olá, ${$('nome').value.trim()}!`;
+    });
+
+    $('sair').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      location.href = 'index.html';
+    });
+
+    const [{ data: favs }, { data: recs }] = await Promise.all([
+      supabase.from('favoritos').select(`created_at, maquininhas(${SELECT_MAQUININHA})`).order('created_at', { ascending: false }),
+      supabase.from('logs_recomendacoes').select('created_at, tipo_negocio, faturamento_mensal, compatibilidade, maquininhas(modelo, slug)')
+        .eq('usuario_id', usuario.id).order('created_at', { ascending: false }).limit(10),
+    ]);
+
+    $('favoritos').innerHTML = favs?.length
+      ? favs.map((f) => cardMaquininha(f.maquininhas)).join('')
+      : '<p class="vazio">Você ainda não favoritou nenhuma maquininha. <a href="catalogo.html">Explore o catálogo</a>.</p>';
+
+    $('historico').innerHTML = recs?.length
+      ? `<table><tbody>${recs.map((r) => `<tr>
+          <td>${dataBr(r.created_at)}</td>
+          <td>${r.maquininhas ? `<a href="maquininha.html?slug=${encodeURIComponent(r.maquininhas.slug)}">${esc(r.maquininhas.modelo)}</a>` : '—'}</td>
+          <td class="num">${brl(r.faturamento_mensal)}/mês</td></tr>`).join('')}</tbody></table>`
+      : '<p class="texto-suave">Nenhuma ainda. <a href="recomendacao.html">Fazer uma recomendação</a>.</p>';
+  </script>
+</body>
+</html>

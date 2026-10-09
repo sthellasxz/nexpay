@@ -1,0 +1,16 @@
+/* Paleta oficial NexPay — creme e tons de verde */
+:root {
+  --creme: #F6F0E1;          /* fundo principal */
+  --creme-escuro: #EAE0C8;   /* cards, divisórias */
+  --branco-quente: #FFFCF5;  /* superfícies elevadas */
+  --verde-escuro: #1E4634;   /* títulos, cabeçalho, botões principais */
+  --verde: #2F6B4F;          /* links, destaques */
+  --verde-medio: #5C9A6E;    /* detalhes, ícones */
+  --verde-claro: #A9CFA0;    /* selos, fundos de destaque */
+  --verde-palido: #DCEBD5;   /* fundos suaves */
+  --texto: #1B2A22;          /* texto principal */
+  --texto-suave: #55665C;    /* texto secundário */
+
+  --fonte-titulo: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  --fonte-texto: 'Inter', 'Segoe UI', Arial, sans-serif;
+}

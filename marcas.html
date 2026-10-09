@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marcas de maquininha — NexPay</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <link rel="stylesheet" href="css/estilo.css">
+  <style>
+    /* Cada card ocupa 6 linhas da grade (subgrid): topo, descrição, números,
+       modelos, vantagens e botão ficam alinhados entre os cards da mesma linha */
+    #lista-marcas { row-gap: 0; }
+    .marca-card { display: grid; grid-row: span 6; grid-template-rows: subgrid; row-gap: 14px; margin-bottom: 20px; align-content: start; }
+    .marca-card > p { align-self: start; }
+    .marca-topo { display: flex; align-items: center; gap: 14px; }
+    .marca-icone { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-family: var(--fonte-titulo); font-weight: 700; font-size: 1.3rem; flex-shrink: 0; }
+    .marca-topo h2 { font-size: 1.3rem; margin: 0; }
+    .marca-numeros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+    .marca-numeros div { background: var(--creme); border-radius: 12px; padding: 8px 4px; }
+    .marca-numeros b { display: block; font-family: var(--fonte-titulo); color: var(--verde-escuro); }
+    .marca-numeros span { font-size: .72rem; color: var(--texto-suave); }
+    .marca-card ul { margin: 0; padding-left: 18px; font-size: .92rem; }
+    .marca-card .btn { margin-top: auto; }
+    .modelos a { text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header id="topo"></header>
+
+  <main class="secao">
+    <div class="container">
+      <div class="secao-titulo">
+        <span class="selo">Marcas</span>
+        <h1>Principais marcas do mercado</h1>
+        <p>Conheça as empresas de maquininha e de pagamento pelo celular, seus modelos e principais vantagens.</p>
+      </div>
+      <div class="grade" id="lista-marcas" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
+        <p class="carregando">Carregando marcas...</p>
+      </div>
+    </div>
+  </main>
+
+  <footer id="rodape"></footer>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { iniciarLayout } from './js/layout.js';
+    import { esc, pct, organizarTaxas } from './js/util.js';
+
+    iniciarLayout('marcas');
+
+    const { data: marcas, error } = await supabase
+      .from('marcas')
+      .select('*, vantagens_marcas(vantagem), maquininhas(modelo, slug, tipo, taxas(tipo, parcelas, valor))')
+      .order('nome');
+
+    const lista = document.getElementById('lista-marcas');
+    if (error) {
+      lista.innerHTML = '<p class="vazio">Não foi possível carregar as marcas.</p>';
+    } else {
+      lista.innerHTML = marcas.map((m) => {
+        const taxas = m.maquininhas.map((q) => organizarTaxas(q.taxas));
+        const menor = (campo) => {
+          const v = taxas.map((t) => t[campo]).filter((x) => x != null);
+          return v.length ? Math.min(...v) : null;
+        };
+        const apps = m.maquininhas.filter((q) => q.tipo === 'celular').length;
+        return `<article class="card marca-card">
+          <div class="marca-topo">
+            <div class="marca-icone" style="background:${esc(m.cor)}">${esc(m.nome[0])}</div>
+            <div>
+              <h2>${esc(m.nome)}</h2>
+              <span class="texto-suave" style="font-size:.85rem">${esc(m.grupo)}</span>
+            </div>
+          </div>
+          <p class="texto-suave" style="margin:0;font-size:.93rem">${esc(m.descricao)}</p>
+          <div class="marca-numeros">
+            <div><b>${m.maquininhas.length - apps}</b><span>maquininhas</span></div>
+            <div><b>${pct(menor('debito'))}</b><span>menor débito</span></div>
+            <div><b>${pct(menor('credito_vista'))}</b><span>menor crédito</span></div>
+          </div>
+          <div>
+            <span class="rotulo">Modelos</span>
+            <div class="chips modelos" style="margin-top:6px">
+              ${m.maquininhas.map((q) => `<a class="chip" href="maquininha.html?slug=${encodeURIComponent(q.slug)}">${esc(q.modelo)}${q.tipo === 'celular' ? ' 📱' : ''}</a>`).join('')}
+            </div>
+          </div>
+          <div>
+            <span class="rotulo">Principais vantagens</span>
+            <ul>${m.vantagens_marcas.map((v) => `<li>${esc(v.vantagem)}</li>`).join('')}</ul>
+          </div>
+          <a class="btn" href="catalogo.html?marca=${encodeURIComponent(m.slug)}">Ver modelos e taxas</a>
+        </article>`;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

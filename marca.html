@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexPay — Identidade visual</title>
+  <link rel="icon" href="assets/img/logo-icone.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cores.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body { background: var(--creme); color: var(--texto); font-family: var(--fonte-texto); padding: 40px 16px; }
+    main { max-width: 880px; margin: 0 auto; display: grid; gap: 24px; }
+    h1 { font-family: var(--fonte-titulo); color: var(--verde-escuro); font-size: 28px; }
+    h2 { font-family: var(--fonte-titulo); font-size: 16px; color: var(--texto-suave); font-weight: 600; margin-bottom: 16px; }
+    .bloco { border-radius: 20px; padding: 40px; display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; }
+    .claro { background: var(--branco-quente); border: 1px solid var(--creme-escuro); }
+    .escuro { background: var(--verde-escuro); }
+    .logo { height: 72px; }
+    .icone { height: 72px; }
+    .paleta { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .cor { border-radius: 14px; overflow: hidden; border: 1px solid var(--creme-escuro); background: var(--branco-quente); }
+    .cor span { display: block; height: 72px; }
+    .cor p { padding: 10px 12px; font-size: 13px; }
+    .cor small { color: var(--texto-suave); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Identidade visual NexPay</h1>
+
+    <section>
+      <h2>Logo em fundo claro</h2>
+      <div class="bloco claro">
+        <img class="logo" src="assets/img/logo-nexpay.svg" alt="Logo NexPay">
+        <img class="icone" src="assets/img/logo-icone.svg" alt="Ícone NexPay">
+      </div>
+    </section>
+
+    <section>
+      <h2>Logo em fundo verde</h2>
+      <div class="bloco escuro">
+        <img class="logo" src="assets/img/logo-nexpay-claro.svg" alt="Logo NexPay versão clara">
+      </div>
+    </section>
+
+    <section>
+      <h2>Paleta de cores</h2>
+      <div class="paleta">
+        <div class="cor"><span style="background:#F6F0E1"></span><p>Creme<br><small>#F6F0E1</small></p></div>
+        <div class="cor"><span style="background:#EAE0C8"></span><p>Creme escuro<br><small>#EAE0C8</small></p></div>
+        <div class="cor"><span style="background:#1E4634"></span><p>Verde escuro<br><small>#1E4634</small></p></div>
+        <div class="cor"><span style="background:#2F6B4F"></span><p>Verde<br><small>#2F6B4F</small></p></div>
+        <div class="cor"><span style="background:#5C9A6E"></span><p>Verde médio<br><small>#5C9A6E</small></p></div>
+        <div class="cor"><span style="background:#A9CFA0"></span><p>Verde claro<br><small>#A9CFA0</small></p></div>
+        <div class="cor"><span style="background:#DCEBD5"></span><p>Verde pálido<br><small>#DCEBD5</small></p></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
