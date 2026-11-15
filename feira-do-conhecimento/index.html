@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feira do Conhecimento · Matemática nas Viagens</title>
+  <meta name="description" content="Protótipo interativo sobre matemática financeira nas viagens: câmbio, custo de vida, inflação e planejamento de orçamento.">
+  <style>
+    :root {
+      --azul-950: #071f40;
+      --azul-900: #0a2a57;
+      --azul-700: #1150a0;
+      --azul-600: #1f6fd1;
+      --azul-400: #5b9be6;
+      --azul-200: #cfe3f8;
+      --azul-100: #e4f0fc;
+      --azul-50:  #f3f8fd;
+      --branco:   #ffffff;
+      --texto:    #133056;
+      --muted:    #4d6785;
+      --borda:    #d6e4f3;
+      --sombra:   0 10px 30px rgba(17, 80, 160, .10);
+      --raio:     16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--texto);
+      background: var(--branco);
+      line-height: 1.6;
+    }
+    h1, h2, h3 { line-height: 1.2; color: var(--azul-900); margin: 0 0 .5em; }
+    h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); }
+    h2 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); }
+    h3 { font-size: 1.15rem; }
+    p { margin: 0 0 1em; }
+    a { color: var(--azul-700); }
+    .container { width: min(1100px, calc(100% - 32px)); margin-inline: auto; }
+
+    /* ---------- Navegação ---------- */
+    header.topo {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--borda);
+    }
+    .topo .container {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      min-height: 60px;
+    }
+    .marca { font-weight: 800; color: var(--azul-900); text-decoration: none; white-space: nowrap; }
+    .marca span { color: var(--azul-600); }
+    nav.menu { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
+    nav.menu::-webkit-scrollbar { display: none; }
+    nav.menu a {
+      text-decoration: none; color: var(--muted); font-size: .92rem; white-space: nowrap;
+      padding: 6px 2px; border-bottom: 2px solid transparent;
+    }
+    nav.menu a:hover { color: var(--azul-700); border-bottom-color: var(--azul-400); }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      background:
+        radial-gradient(circle at 85% 20%, var(--azul-400) 0, transparent 35%),
+        linear-gradient(135deg, var(--azul-950), var(--azul-700));
+      color: var(--branco);
+      padding: 88px 0 96px;
+    }
+    .hero h1 { color: var(--branco); max-width: 15ch; }
+    .hero p.lead { font-size: 1.15rem; max-width: 60ch; color: #dbeaff; }
+    .selo {
+      display: inline-block; font-size: .85rem; font-weight: 600;
+      background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25);
+      padding: 6px 14px; border-radius: 999px; margin-bottom: 20px;
+    }
+    .hero-stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .hero-stats div {
+      background: rgba(255,255,255,.12); border-radius: 12px; padding: 12px 18px; min-width: 120px;
+    }
+    .hero-stats strong { display: block; font-size: 1.6rem; }
+    .hero-stats span { font-size: .85rem; color: #cfe3f8; }
+
+    /* ---------- Layout de seções ---------- */
+    section.bloco { padding: 72px 0; border-bottom: 1px solid var(--borda); }
+    section.bloco:nth-of-type(even) { background: var(--azul-50); }
+    .rotulo {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--azul-600); margin-bottom: 8px;
+    }
+    .rotulo b {
+      display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+      background: var(--azul-600); color: var(--branco); font-size: .9rem; letter-spacing: 0;
+    }
+    .intro { color: var(--muted); max-width: 70ch; margin-bottom: 28px; }
+    .grade { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .card {
+      background: var(--branco); border: 1px solid var(--borda); border-radius: var(--raio);
+      padding: 24px; box-shadow: var(--sombra);
+    }
+    .card h3 { margin-bottom: 10px; }
+    ul.lista { margin: 0; padding-left: 20px; }
+    ul.lista li { margin-bottom: 6px; }
+    .conceito {
+      margin-top: 24px; padding: 14px 18px; border-left: 4px solid var(--azul-600);
+      background: var(--azul-100); border-radius: 8px; color: var(--azul-900);
+    }
+    .exemplo {
+      margin-top: 20px; padding: 16px 20px; background: var(--branco);
+      border: 1px dashed var(--azul-400); border-radius: 12px;
+    }
+
+    /* ---------- Destinos ---------- */
+    .continente { border-top: 4px solid var(--azul-600); }
+    .continente .tag { font-size: .8rem; color: var(--azul-600); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .pais-chip {
+      display: inline-block; margin: 6px 6px 0 0; padding: 6px 12px; border-radius: 999px;
+      background: var(--azul-100); color: var(--azul-900); font-size: .92rem; font-weight: 600;
+    }
+
+    /* ---------- Ferramentas ---------- */
+    .ferramenta {
+      margin-top: 28px; background: var(--branco); border: 1px solid var(--borda);
+      border-radius: var(--raio); padding: 24px; box-shadow: var(--sombra);
+    }
+    .ferramenta > h3 { display: flex; align-items: center; gap: 8px; }
+    .ferramenta > h3::before { content: "⚙"; color: var(--azul-600); }
+    .form-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); align-items: end; }
+    label { display: block; font-size: .85rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    input[type="number"], select {
+      width: 100%; font: inherit; color: var(--texto); background: var(--branco);
+      border: 1.5px solid var(--borda); border-radius: 10px; padding: 10px 12px;
+    }
+    input:focus, select:focus, button:focus-visible { outline: 3px solid var(--azul-200); outline-offset: 1px; border-color: var(--azul-600); }
+    button {
+      font: inherit; font-weight: 700; cursor: pointer; border: 0; border-radius: 10px;
+      background: var(--azul-600); color: var(--branco); padding: 11px 18px;
+    }
+    button:hover { background: var(--azul-700); }
+    button.secundario { background: var(--azul-100); color: var(--azul-900); }
+    button.secundario:hover { background: var(--azul-200); }
+    .resultado-destaque {
+      margin-top: 20px; padding: 18px 20px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--azul-900), var(--azul-600)); color: var(--branco);
+    }
+    .resultado-destaque small { opacity: .85; display: block; }
+    .resultado-destaque strong { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+    ol.passos, ul.passos { margin: 14px 0 0; padding-left: 20px; color: var(--muted); }
+    ol.passos li, ul.passos li { margin-bottom: 4px; }
+    .aviso { font-size: .85rem; color: var(--muted); margin-top: 12px; }
+    .aviso.erro { color: #b42318; font-weight: 600; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: .95rem; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--borda); }
+    th { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tfoot td { font-weight: 800; color: var(--azul-900); border-bottom: 0; }
+    .pos { color: #b42318; font-weight: 600; }
+    .neg { color: #137a3b; font-weight: 600; }
+
+    /* ---------- Barra de orçamento ---------- */
+    .barra {
+      display: flex; height: 40px; border-radius: 999px; overflow: hidden;
+      background: var(--azul-100); margin-top: 22px;
+    }
+    .barra div { height: 100%; transition: flex-basis .35s ease; min-width: 0; }
+    .legenda { display: grid; gap: 10px; margin-top: 18px; }
+    .legenda-item {
+      display: grid; grid-template-columns: 14px 1fr auto auto; gap: 12px; align-items: center;
+      font-size: .95rem;
+    }
+    .bolinha { width: 14px; height: 14px; border-radius: 50%; }
+    .legenda-item input { width: 90px; padding: 6px 8px; }
+    .soma { margin-top: 14px; font-weight: 700; }
+    .soma.ok { color: #137a3b; }
+
+    /* ---------- Inflação e lista de checagem ---------- */
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .checklist li {
+      display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--borda);
+    }
+    .checklist input { margin-top: 6px; width: 18px; height: 18px; accent-color: var(--azul-600); flex: none; }
+    .checklist label { font-weight: 500; color: var(--texto); margin: 0; cursor: pointer; }
+
+    /* ---------- Quiz ---------- */
+    .pergunta { padding: 18px 0; border-bottom: 1px solid var(--borda); }
+    .pergunta:last-of-type { border-bottom: 0; }
+    .pergunta h3 { font-size: 1.02rem; }
+    .opcoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .opcao {
+      background: var(--azul-50); color: var(--azul-900); border: 1.5px solid var(--borda);
+      padding: 9px 16px; font-weight: 600;
+    }
+    .opcao:hover:not(:disabled) { background: var(--azul-100); }
+    .opcao.certa { background: #e3f7ea; border-color: #2e9e5b; color: #0f5b30; }
+    .opcao.errada { background: #fde8e6; border-color: #d92d20; color: #8a1c14; }
+    .opcao:disabled { cursor: default; }
+    .feedback { margin-top: 8px; font-size: .92rem; min-height: 1.4em; color: var(--muted); }
+    .placar {
+      margin-top: 20px; padding: 16px; border-radius: 12px; background: var(--azul-100);
+      color: var(--azul-900); font-weight: 700; text-align: center; display: none;
+    }
+
+    footer.rodape { background: var(--azul-950); color: #bcd6f5; padding: 36px 0; font-size: .92rem; }
+    footer.rodape strong { color: var(--branco); }
+
+    @media (max-width: 640px) {
+      .topo .container { flex-direction: column; align-items: stretch; padding: 10px 0; }
+      nav.menu { width: 100%; min-width: 0; }
+      .hero { padding: 64px 0 72px; }
+      section.bloco { padding: 52px 0; }
+      .legenda-item { grid-template-columns: 14px 1fr auto; }
+      .legenda-item input { grid-column: 2 / 4; width: 100%; }
+      .ferramenta { padding: 18px; }
+      table { font-size: .88rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="container">
+    <a class="marca" href="#inicio">Feira do <span>Conhecimento</span></a>
+    <nav class="menu" aria-label="Seções">
+      <a href="#destinos">Destinos</a>
+      <a href="#importancia">1 · Importância</a>
+      <a href="#cambio">2 · Câmbio</a>
+      <a href="#epoca">3 · Época</a>
+      <a href="#custo">4 · Custo de vida</a>
+      <a href="#inflacao">5 · Inflação</a>
+      <a href="#orcamento">6 · Orçamento</a>
+      <a href="#consumo">7 · Consumo</a>
+      <a href="#quiz">Quiz</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <section id="inicio" class="hero">
+    <div class="container">
+      <span class="selo">Feira do conhecimento · Matemática</span>
+      <h1>Matemática financeira nas viagens</h1>
+      <p class="lead">Planeje, converta moedas, compare destinos e proteja seu dinheiro. Cada tema da feira vem com uma ferramenta para você testar os números na prática.</p>
+      <div class="hero-stats">
+        <div><strong>3</strong><span>continentes</span></div>
+        <div><strong>6</strong><span>países</span></div>
+        <div><strong>7</strong><span>temas</span></div>
+        <div><strong>4</strong><span>simuladores</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DESTINOS ============ -->
+  <section id="destinos" class="bloco">
+    <div class="container">
+      <div class="rotulo">Ponto de partida</div>
+      <h2>Continentes e destinos da feira</h2>
+      <p class="intro">Os exemplos do projeto usam seis países. Ao longo da página, você verá comparações entre eles.</p>
+      <div class="grade">
+        <article class="card continente">
+          <div class="tag">Ásia</div>
+          <h3>Oriente</h3>
+          <span class="pais-chip">Arábia Saudita</span>
+          <span class="pais-chip">Japão</span>
+        </article>
+        <article class="card continente">
+          <div class="tag">Europa</div>
+          <h3>Velho Continente</h3>
+          <span class="pais-chip">França</span>
+          <span class="pais-chip">Itália</span>
+        </article>
+        <article class="card continente">
+          <div class="tag">América do Norte</div>
+          <h3>Norte do continente</h3>
+          <span class="pais-chip">Estados Unidos</span>
+          <span class="pais-chip">México</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 1. IMPORTÂNCIA ============ -->
+  <section id="importancia" class="bloco">
+    <div class="container">
+      <div class="rotulo"><b>1</b> Tema</div>
+      <h2>A importância da matemática financeira nas viagens</h2>
+      <p class="intro">Viajar envolve dezenas de decisões com dinheiro. Entender os cálculos evita surpresas no fim da viagem.</p>
+      <div class="grade">
+        <div class="card"><h3>Planejamento financeiro</h3><p>Definir quanto cabe no bolso antes de sair de casa.</p></div>
+        <div class="card"><h3>Organização de orçamento</h3><p>Dividir o total entre passagens, hospedagem, comida e lazer.</p></div>
+        <div class="card"><h3>Controle de gastos</h3><p>Acompanhar o que já foi gasto e o que ainda sobra.</p></div>
+        <div class="card"><h3>Comparação de preços</h3><p>Converter tudo para a mesma moeda antes de decidir.</p></div>
+        <div class="card"><h3>Prevenção de gastos inesperados</h3><p>Reservar uma margem para imprevistos.</p></div>
+      </div>
+      <div class="conceito"><strong>Conceito matemático:</strong> porcentagem, operações financeiras, médias e orçamento.</div>
+    </div>
+  </section>
+
+  <!-- ============ 2. CÂMBIO ============ -->
+  <section id="cambio" class="bloco">
+    <div class="container">
+      <div class="rotulo"><b>2</b> Tema</div>
+      <h2>Câmbio e conversão de moedas</h2>
+      <p class="intro">Real, euro, dólar e outras moedas: a cotação muda ao longo do tempo, e a taxa cobrada pelo banco ou pela operadora pesa no total.</p>
+      <ul class="lista">
+        <li>Valorização e desvalorização cambial.</li>
+        <li>Conversão de moedas e taxas de câmbio.</li>
+        <li>Custos de operação (IOF, spread e tarifas).</li>
+      </ul>
+
+      <div class="ferramenta" id="conversor">
+        <h3>Simulador de conversão</h3>
+        <p class="aviso">As cotações abaixo são <strong>ilustrativas</strong>, para treino. Use a cotação do seu banco ou da sua corretora para valores reais.</p>
+        <div class="form-grid">
+          <div>
+            <label for="conv-valor">Valor</label>
+            <input id="conv-valor" type="number" min="0" step="0.01" value="1200">
+          </div>
+          <div>
+            <label for="moeda-de">De</label>
+            <select id="moeda-de"></select>
+          </div>
+          <div>
+            <label for="moeda-para">Para</label>
+            <select id="moeda-para"></select>
+          </div>
+          <div>
+            <label for="conv-taxa">Taxa de operação (%)</label>
+            <input id="conv-taxa" type="number" min="0" step="0.1" value="3.5">
+          </div>
+          <div>
+            <button type="button" class="secundario" id="btn-inverter">⇄ Inverter moedas</button>
+          </div>
+        </div>
+
+        <div class="resultado-destaque">
+          <small>Você receberá aproximadamente</small>
+          <strong id="conv-resultado">—</strong>
+        </div>
+
+        <h3 style="margin-top:20px">Passo a passo</h3>
+        <ol class="passos" id="conv-passos"></ol>
+      </div>
+
+      <div class="ferramenta" id="variacao">
+        <h3>Valorização e desvalorização</h3>
+        <p class="intro" style="margin-bottom:16px">Compare duas cotações de uma mesma moeda para ver quanto ela subiu ou caiu.</p>
+        <div class="form-grid">
+          <div><label for="cot-antiga">Cotação anterior (R$)</label><input id="cot-antiga" type="number" step="0.01" value="6.00"></div>
+          <div><label for="cot-nova">Cotação atual (R$)</label><input id="cot-nova" type="number" step="0.01" value="6.30"></div>
+        </div>
+        <div class="resultado-destaque">
+          <small>Variação da moeda</small>
+          <strong id="cot-resultado">—</strong>
+        </div>
+        <p class="aviso" id="cot-texto"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. ÉPOCA ============ -->
+  <section id="epoca" class="bloco">
+    <div class="container">
+      <div class="rotulo"><b>3</b> Tema</div>
+      <h2>Melhor época para viajar: clima e economia</h2>
+      <p class="intro">Escolher a data certa pode reduzir o custo da viagem sem mudar o destino.</p>
+      <div class="grade">
+        <div class="card"><h3>Alta e baixa temporada</h3><p>Na alta temporada, os preços sobem. Na baixa, costumam cair.</p></div>
+        <div class="card"><h3>Estações nos hemisférios</h3><p>Quando é verão no Brasil, é inverno na Europa e nos Estados Unidos.</p></div>
+        <div class="card"><h3>Temperatura e clima</h3><p>Condições climáticas influenciam roupas, passeios e até o orçamento.</p></div>
+        <div class="card"><h3>Férias escolares e feriados</h3><p>Datas de férias concentram turistas e elevam as diárias.</p></div>
+        <div class="card"><h3>Passagens e hospedagens</h3><p>Os preços de passagens e hospedagens variam ao longo do ano.</p></div>
+      </div>
+      <div class="exemplo">
+        <strong>Exemplo:</strong> viajar para a Europa no verão pode significar temperaturas mais altas, maior movimento turístico e hospedagens mais caras.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. CUSTO DE VIDA ============ -->
+  <section id="custo" class="bloco">
+    <div class="container">
+      <div class="rotulo"><b>4</b> Tema</div>
+      <h2>Custo de vida e diferenças geográficas</h2>
+      <p class="intro">Dois destinos podem oferecer experiências parecidas, mas com custos muito diferentes. Compare as categorias abaixo.</p>
+      <ul class="lista">
+        <li>Alimentação</li>
+        <li>Hospedagem</li>
+        <li>Transporte público</li>
+        <li>Passeios turísticos</li>
+        <li>Compras e serviços</li>
+      </ul>
+
+      <div class="ferramenta" id="comparador">
+        <h3>Comparador de destinos</h3>
+        <p class="aviso">Valores <strong>hipotéticos</strong>, em reais por dia, criados só para praticar as contas. Não representam preços reais.</p>
+        <div class="form-grid">
+          <div><label for="dest-a">Destino A</label><select id="dest-a"></select></div>
+          <div><label for="dest-b">Destino B</label><select id="dest-b"></select></div>
+          <div><label for="dias">Dias de viagem</label><input id="dias" type="number" min="1" step="1" value="7"></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Categoria</th><th class="num" id="th-a">A</th><th class="num" id="th-b">B</th><th class="num">Diferença (B vs A)</th></tr>
+            </thead>
+            <tbody id="tabela-custos"></tbody>
+            <tfoot id="total-custos"></tfoot>
+          </table>
+        </div>
+        <div class="resultado-destaque" style="margin-top:20px">
+          <small id="comp-resumo-titulo">Custo total da viagem</small>
+          <strong id="comp-resumo">—</strong>
+        </div>
+        <p class="aviso" id="comp-texto"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. INFLAÇÃO ============ -->
+  <section id="inflacao" class="bloco">
+    <div class="container">
+      <div class="rotulo"><b>5</b> Tema</div>
+      <h2>Inflação e poder de compra</h2>
+      <p class="intro">A inflação faz o mesmo dinheiro comprar menos com o passar do tempo. Veja como ela afeta uma hospedagem.</p>
+      <ul class="lista">
+        <li>Quanto custava uma hospedagem há cinco anos?</li>
+        <li>Quanto custa atualmente?</li>
+        <li>Qual foi o aumento percentual?</li>
+        <li>Como isso interfere no planejamento de uma viagem futura?</li>
+      </ul>
+
+      <div class="ferramenta" id="inflacao-sim">
+        <h3>Simulador de inflação</h3>
+        <div class="form-grid">
+          <div><label for="inf-preco">Preço atual (R$)</label><input id="inf-preco" type="number" min="0" step="0.01" value="400"></div>
+          <div><label for="inf-taxa">Inflação média anual (%)</label><input id="inf-taxa" type="number" min="0" step="0.1" value="5"></div>
+          <div><label for="inf-anos">Período (anos)</label><input id="inf-anos" type="number" min="1" step="1" value="5"></div>
+        </div>
+        <div class="grade" style="margin-top:20px">
+          <div class="card">
+            <h3>Há <span class="anos-txt">5</span> anos custava</h3>
+            <strong id="inf-passado" style="font-size:1.5rem;color:var(--azul-700)">—</strong>
+          </div>
+          <div class="card">
+            <h3>Aumento acumulado</h3>
+            <strong id="inf-aumento" style="font-size:1.5rem;color:var(--azul-700)">—</strong>
+          </div>
+          <div class="card">
+            <h3>Quanto custará daqui a <span class="anos-txt">5</span> anos</h3>
+            <strong id="inf-futuro" style="font-size:1.5rem;color:var(--azul-700)">—</strong>
+          </div>
+        </div>
+        <div class="exemplo" id="inf-texto"></div>
+        <p class="aviso">Fórmulas: passado = atual ÷ (1 + i)ⁿ · aumento = (1 + i)ⁿ − 1 · futuro = atual × (1 + i)ⁿ.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6. ORÇAMENTO ============ -->
+  <section id="orcamento" class="bloco">
+    <div class="container">
+      <div class="rotulo"><b>6</b> Tema</div>
+      <h2>Planejamento de orçamento</h2>
+      <p class="intro">Como distribuir o dinheiro disponível para uma viagem? O exemplo da feira usa R$ 8.000. Mude o valor e as porcentagens para testar outros cenários.</p>
+
+      <div class="ferramenta" id="orc">
+        <h3>Divisão do orçamento</h3>
+        <div class="form-grid">
+          <div>
+            <label for="orc-total">Orçamento total (R$)</label>
+            <input id="orc-total" type="number" min="0" step="100" value="8000">
+          </div>
+        </div>
+
+        <div class="barra" id="orc-barra" role="img" aria-label="Divisão do orçamento"></div>
+        <div class="legenda" id="orc-legenda"></div>
+        <div class="soma" id="orc-soma"></div>
+        <p class="aviso">Matemática: porcentagem, soma, subtração e organização financeira. Altere as porcentagens e veja se a soma continua em 100%.</p>
+        <button type="button" class="secundario" id="orc-reset">Restaurar exemplo da feira</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. CONSUMO CONSCIENTE ============ -->
+  <section id="consumo" class="bloco">
+    <div class="container">
+      <div class="rotulo"><b>7</b> Tema</div>
+      <h2>Consumo consciente e imprevistos</h2>
+      <p class="intro">Imprevistos acontecem em toda viagem. Marque os itens que você já pratica para ver seu nível de preparo.</p>
+      <div class="card">
+        <ul class="checklist" id="checklist">
+          <li><input type="checkbox" id="c1"><label for="c1">Reservar dinheiro para emergências (ex.: 7,5% do orçamento).</label></li>
+          <li><input type="checkbox" id="c2"><label for="c2">Comparar preços antes de comprar.</label></li>
+          <li><input type="checkbox" id="c3"><label for="c3">Considerar taxas e impostos, como o IOF e as tarifas de câmbio.</label></li>
+          <li><input type="checkbox" id="c4"><label for="c4">Evitar dívidas para viajar.</label></li>
+          <li><input type="checkbox" id="c5"><label for="c5">Planejar os gastos de acordo com a realidade financeira.</label></li>
+        </ul>
+        <div class="resultado-destaque" style="margin-top:20px">
+          <small>Seu preparo</small>
+          <strong id="check-resultado">0 de 5</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section id="quiz" class="bloco">
+    <div class="container">
+      <div class="rotulo">Revisão</div>
+      <h2>Quiz da feira</h2>
+      <p class="intro">Teste o que aprendeu. Cada resposta mostra se acertou e explica o cálculo.</p>
+      <div class="card" id="quiz-box"></div>
+      <div class="placar" id="placar"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="rodape">
+  <div class="container">
+    <p><strong>Feira do Conhecimento · Matemática financeira nas viagens</strong></p>
+    <p>Protótipo estático: HTML, CSS e JavaScript em um único arquivo, sem banco de dados. Cotações e custos são exemplos para estudo.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Utilitários ----------
+  const $ = (sel) => document.querySelector(sel);
+  const fmt = (n, d = 2) => Number(n).toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const reais = (n) => 'R$ ' + fmt(n);
+  const lerNum = (el, padrao = 0) => {
+    const v = parseFloat(String(el.value).replace(',', '.'));
+    return Number.isFinite(v) ? v : padrao;
+  };
+  const cores = ['#0a2a57', '#1f6fd1', '#5b9be6', '#9cc4f2', '#3f8fb5', '#7fa7d9'];
+
+  // ---------- 2. Câmbio ----------
+  // "taxa" = quanto vale 1 unidade da moeda em reais (valores ilustrativos).
+  const MOEDAS = {
+    BRL: { nome: 'Real brasileiro', taxa: 1 },
+    EUR: { nome: 'Euro', taxa: 6.0 },
+    USD: { nome: 'Dólar americano', taxa: 5.2 },
+    JPY: { nome: 'Iene japonês', taxa: 0.035 },
+    SAR: { nome: 'Riyal saudita', taxa: 1.39 },
+    MXN: { nome: 'Peso mexicano', taxa: 0.29 }
+  };
+
+  function iniciarConversor() {
+    const de = $('#moeda-de');
+    const para = $('#moeda-para');
+    Object.entries(MOEDAS).forEach(([cod, m]) => {
+      de.add(new Option(`${cod} · ${m.nome}`, cod));
+      para.add(new Option(`${cod} · ${m.nome}`, cod));
+    });
+    de.value = 'BRL';
+    para.value = 'EUR';
+
+    document.querySelectorAll('#conversor input, #conversor select')
+      .forEach((el) => el.addEventListener('input', calcularConversor));
+    $('#btn-inverter').addEventListener('click', () => {
+      const a = de.value; de.value = para.value; para.value = a;
+      calcularConversor();
+    });
+    calcularConversor();
+  }
+
+  function calcularConversor() {
+    const valor = lerNum($('#conv-valor'));
+    const taxa = lerNum($('#conv-taxa'));
+    const de = $('#moeda-de').value;
+    const para = $('#moeda-para').value;
+
+    const emReais = valor * MOEDAS[de].taxa;
+    const comTaxa = emReais * (1 + taxa / 100);
+    const resultado = comTaxa / MOEDAS[para].taxa;
+    const semTaxa = emReais / MOEDAS[para].taxa;
+
+    $('#conv-resultado').textContent = `${fmt(resultado)} ${para}`;
+    $('#conv-passos').innerHTML = `
+      <li>${fmt(valor)} ${de} × ${fmt(MOEDAS[de].taxa, 4)} = ${reais(emReais)}</li>
+      <li>Com taxa de ${fmt(taxa)}%: ${reais(emReais)} × ${fmt(1 + taxa / 100, 3)} = ${reais(comTaxa)}</li>
+      <li>÷ ${fmt(MOEDAS[para].taxa, 4)} (cotação de ${para}) = <strong>${fmt(resultado)} ${para}</strong></li>
+      <li>Custo da taxa: ${fmt(semTaxa - resultado)} ${para} a menos</li>`;
+  }
+
+  function calcularVariacao() {
+    const antiga = lerNum($('#cot-antiga'));
+    const nova = lerNum($('#cot-nova'));
+    const el = $('#cot-resultado');
+    const texto = $('#cot-texto');
+    if (antiga <= 0) {
+      el.textContent = '—';
+      texto.textContent = 'A cotação anterior precisa ser maior que zero.';
+      return;
+    }
+    const var_ = ((nova - antiga) / antiga) * 100;
+    const sinal = var_ > 0 ? '+' : '';
+    el.textContent = `${sinal}${fmt(var_, 2)}%`;
+    if (var_ > 0) {
+      texto.textContent = 'A moeda se valorizou: 1 unidade passou a valer mais reais, e viajar com ela ficou mais caro para quem paga em reais.';
+    } else if (var_ < 0) {
+      texto.textContent = 'A moeda se desvalorizou: 1 unidade passou a valer menos reais, e viajar com ela ficou mais barato para quem paga em reais.';
+    } else {
+      texto.textContent = 'Sem variação entre as cotações.';
+    }
+  }
+
+  // ---------- 4. Custo de vida ----------
+  // Valores HIPOTÉTICOS, em R$ por dia por pessoa, só para exercício.
+  const DESTINOS = {
+    'Arábia Saudita': { 'Alimentação': 280, 'Hospedagem': 480, 'Transporte público': 150, 'Passeios turísticos': 210, 'Compras e serviços': 160 },
+    'Japão':          { 'Alimentação': 260, 'Hospedagem': 420, 'Transporte público': 110, 'Passeios turísticos': 150, 'Compras e serviços': 140 },
+    'França':         { 'Alimentação': 380, 'Hospedagem': 650, 'Transporte público': 120, 'Passeios turísticos': 200, 'Compras e serviços': 150 },
+    'Itália':         { 'Alimentação': 320, 'Hospedagem': 520, 'Transporte público': 100, 'Passeios turísticos': 180, 'Compras e serviços': 130 },
+    'Estados Unidos': { 'Alimentação': 400, 'Hospedagem': 700, 'Transporte público': 180, 'Passeios turísticos': 250, 'Compras e serviços': 220 },
+    'México':         { 'Alimentação': 170, 'Hospedagem': 280, 'Transporte público': 70,  'Passeios turísticos': 110, 'Compras e serviços': 90 }
+  };
+
+  function iniciarComparador() {
+    const a = $('#dest-a');
+    const b = $('#dest-b');
+    Object.keys(DESTINOS).forEach((nome) => {
+      a.add(new Option(nome, nome));
+      b.add(new Option(nome, nome));
+    });
+    a.value = 'França';
+    b.value = 'México';
+    [a, b, $('#dias')].forEach((el) => el.addEventListener('input', calcularComparador));
+    calcularComparador();
+  }
+
+  function calcularComparador() {
+    const nomeA = $('#dest-a').value;
+    const nomeB = $('#dest-b').value;
+    const dias = Math.max(1, Math.floor(lerNum($('#dias'), 1)));
+    const A = DESTINOS[nomeA];
+    const B = DESTINOS[nomeB];
+
+    $('#th-a').textContent = nomeA;
+    $('#th-b').textContent = nomeB;
+
+    const categorias = Object.keys(A);
+    let totalA = 0;
+    let totalB = 0;
+    $('#tabela-custos').innerHTML = categorias.map((cat) => {
+      const va = A[cat];
+      const vb = B[cat];
+      totalA += va;
+      totalB += vb;
+      const dif = ((vb - va) / va) * 100;
+      return `<tr>
+        <td>${cat}</td>
+        <td class="num">${reais(va)}</td>
+        <td class="num">${reais(vb)}</td>
+        <td class="num ${dif > 0 ? 'pos' : dif < 0 ? 'neg' : ''}">${dif > 0 ? '+' : ''}${fmt(dif, 1)}%</td>
+      </tr>`;
+    }).join('');
+
+    const difTotal = ((totalB - totalA) / totalA) * 100;
+    $('#total-custos').innerHTML = `<tr>
+      <td>Média por dia</td>
+      <td class="num">${reais(totalA)}</td>
+      <td class="num">${reais(totalB)}</td>
+      <td class="num">${difTotal > 0 ? '+' : ''}${fmt(difTotal, 1)}%</td>
+    </tr>`;
+
+    const tA = totalA * dias;
+    const tB = totalB * dias;
+    $('#comp-resumo-titulo').textContent = `Custo total em ${dias} dia(s): ${nomeA} × ${nomeB}`;
+    $('#comp-resumo').textContent = `${reais(tA)} × ${reais(tB)}`;
+    const dif = tB - tA;
+    const direcao = dif > 0 ? 'mais caro' : dif < 0 ? 'mais barato' : 'igual';
+    $('#comp-texto').textContent = dif === 0
+      ? 'Os dois destinos têm o mesmo custo diário.'
+      : `${nomeB} é ${fmt(Math.abs(dif / tA * 100), 1)}% ${direcao} que ${nomeA} em média, uma diferença de ${reais(Math.abs(dif))} na viagem. Cálculo: (B − A) ÷ A × 100.`;
+  }
+
+  // ---------- 5. Inflação ----------
+  function calcularInflacao() {
+    const preco = lerNum($('#inf-preco'));
+    const i = lerNum($('#inf-taxa')) / 100;
+    const n = Math.max(1, Math.floor(lerNum($('#inf-anos'), 1)));
+
+    document.querySelectorAll('.anos-txt').forEach((el) => { el.textContent = n; });
+
+    const passado = preco / Math.pow(1 + i, n);
+    const aumento = (Math.pow(1 + i, n) - 1) * 100;
+    const futuro = preco * Math.pow(1 + i, n);
+
+    $('#inf-passado').textContent = reais(passado);
+    $('#inf-aumento').textContent = `+${fmt(aumento, 2)}%`;
+    $('#inf-futuro').textContent = reais(futuro);
+
+    $('#inf-texto').innerHTML = `
+      <strong>Interpretação:</strong> com inflação média de ${fmt(i * 100, 1)}% ao ano, a hospedagem que hoje custa ${reais(preco)}
+      custava cerca de <strong>${reais(passado)}</strong> há ${n} ano(s). Se o preço subir na mesma taxa,
+      daqui a ${n} ano(s) ela custará <strong>${reais(futuro)}</strong>. Para uma viagem futura, o orçamento precisa prever esse reajuste.`;
+  }
+
+  // ---------- 6. Orçamento ----------
+  const ITENS_ORC = [
+    { nome: 'Passagens',         pct: 30.0 },
+    { nome: 'Hospedagem',        pct: 25.0 },
+    { nome: 'Alimentação',       pct: 17.5 },
+    { nome: 'Transporte',        pct: 10.0 },
+    { nome: 'Passeios',          pct: 10.0 },
+    { nome: 'Reserva de emergência', pct: 7.5 }
+  ];
+
+  function iniciarOrcamento() {
+    $('#orc-legenda').innerHTML = ITENS_ORC.map((item, idx) => `
+      <div class="legenda-item">
+        <span class="bolinha" style="background:${cores[idx]}"></span>
+        <span>${item.nome}</span>
+        <span id="orc-val-${idx}" style="font-variant-numeric:tabular-nums">—</span>
+        <input type="number" min="0" max="100" step="0.5" value="${item.pct}" data-idx="${idx}" aria-label="Porcentagem de ${item.nome}">
+      </div>`).join('');
+
+    $('#orc-legenda').addEventListener('input', calcularOrcamento);
+    $('#orc-total').addEventListener('input', calcularOrcamento);
+    $('#orc-reset').addEventListener('click', () => {
+      $('#orc-total').value = 8000;
+      document.querySelectorAll('#orc-legenda input').forEach((el, idx) => { el.value = ITENS_ORC[idx].pct; });
+      calcularOrcamento();
+    });
+    calcularOrcamento();
+  }
+
+  function calcularOrcamento() {
+    const total = lerNum($('#orc-total'));
+    const inputs = [...document.querySelectorAll('#orc-legenda input')];
+    const pcts = inputs.map((el) => lerNum(el));
+    const soma = pcts.reduce((s, p) => s + p, 0);
+
+    const barra = $('#orc-barra');
+    barra.innerHTML = '';
+    ITENS_ORC.forEach((item, idx) => {
+      const valor = total * pcts[idx] / 100;
+      $(`#orc-val-${idx}`).textContent = `${fmt(pcts[idx], 1)}% · ${reais(valor)}`;
+      const seg = document.createElement('div');
+      seg.style.flex = `0 0 ${Math.max(0, pcts[idx])}%`;
+      seg.style.background = cores[idx];
+      seg.title = `${item.nome}: ${fmt(pcts[idx], 1)}%`;
+      barra.appendChild(seg);
+    });
+
+    const soma_el = $('#orc-soma');
+    if (Math.abs(soma - 100) < 0.001) {
+      soma_el.className = 'soma ok';
+      soma_el.textContent = `Soma: ${fmt(soma, 1)}% · Total distribuído: ${reais(total)} ✔`;
+    } else {
+      soma_el.className = 'soma aviso erro';
+      const diferenca = Math.abs(100 - soma);
+      soma_el.textContent = soma > 100
+        ? `Soma: ${fmt(soma, 1)}%. O total passa de 100% em ${fmt(diferenca, 1)} ponto(s): reduza alguma categoria.`
+        : `Soma: ${fmt(soma, 1)}%. Faltam ${fmt(diferenca, 1)} ponto(s) para fechar 100%.`;
+    }
+  }
+
+  // ---------- 7. Checklist ----------
+  function iniciarChecklist() {
+    const boxes = document.querySelectorAll('#checklist input');
+    const atualizar = () => {
+      const marcados = [...boxes].filter((b) => b.checked).length;
+      $('#check-resultado').textContent = `${marcados} de ${boxes.length}`;
+    };
+    boxes.forEach((b) => b.addEventListener('change', atualizar));
+    atualizar();
+  }
+
+  // ---------- Quiz ----------
+  const PERGUNTAS = [
+    {
+      q: 'Quanto é 30% de R$ 8.000?',
+      ops: ['R$ 2.000', 'R$ 2.400', 'R$ 2.800', 'R$ 3.000'],
+      certa: 1,
+      exp: '8.000 × 0,30 = 2.400.'
+    },
+    {
+      q: 'Com 1 euro = R$ 6,00, quantos euros você recebe por R$ 1.200?',
+      ops: ['150 €', '200 €', '240 €', '720 €'],
+      certa: 1,
+      exp: '1.200 ÷ 6 = 200 €.'
+    },
+    {
+      q: 'Uma hospedagem custava R$ 200 e passou a custar R$ 250. Qual foi o aumento percentual?',
+      ops: ['20%', '25%', '30%', '50%'],
+      certa: 1,
+      exp: '(250 − 200) ÷ 200 × 100 = 25%.'
+    },
+    {
+      q: 'Qual é a principal função da reserva de emergência em uma viagem?',
+      ops: ['Pagar passagens com antecedência', 'Cobrir imprevistos sem recorrer a dívidas', 'Aumentar o limite do cartão', 'Trocar moedas com ágio'],
+      certa: 1,
+      exp: 'Ela protege o orçamento de gastos inesperados, evitando dívidas durante a viagem.'
+    },
+    {
+      q: 'Em um orçamento dividido em porcentagens, a soma de todas as partes deve ser:',
+      ops: ['90%', '100%', '110%', '150%'],
+      certa: 1,
+      exp: 'O orçamento inteiro corresponde a 100%. Se a soma for diferente, alguma categoria está errada.'
+    }
+  ];
+
+  function iniciarQuiz() {
+    const box = $('#quiz-box');
+    let acertos = 0;
+    let respondidas = 0;
+
+    box.innerHTML = PERGUNTAS.map((p, i) => `
+      <div class="pergunta" data-i="${i}">
+        <h3>${i + 1}. ${p.q}</h3>
+        <div class="opcoes">
+          ${p.ops.map((op, j) => `<button type="button" class="opcao" data-j="${j}">${op}</button>`).join('')}
+        </div>
+        <div class="feedback" aria-live="polite"></div>
+      </div>`).join('');
+
+    box.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('.opcao');
+      if (!btn || btn.disabled) return;
+      const bloco = btn.closest('.pergunta');
+      const i = Number(bloco.dataset.i);
+      const p = PERGUNTAS[i];
+      const j = Number(btn.dataset.j);
+      const botoes = bloco.querySelectorAll('.opcao');
+      botoes.forEach((b) => { b.disabled = true; });
+      const fb = bloco.querySelector('.feedback');
+      if (j === p.certa) {
+        btn.classList.add('certa');
+        acertos++;
+        fb.textContent = '✔ Correto. ' + p.exp;
+      } else {
+        btn.classList.add('errada');
+        botoes[p.certa].classList.add('certa');
+        fb.textContent = '✘ Não foi dessa vez. ' + p.exp;
+      }
+      respondidas++;
+      if (respondidas === PERGUNTAS.length) {
+        const placar = $('#placar');
+        placar.style.display = 'block';
+        placar.textContent = `Você acertou ${acertos} de ${PERGUNTAS.length} perguntas.`;
+      }
+    });
+  }
+
+  // ---------- Inicialização ----------
+  document.addEventListener('DOMContentLoaded', () => {
+    iniciarConversor();
+    ['#cot-antiga', '#cot-nova'].forEach((s) => $(s).addEventListener('input', calcularVariacao));
+    calcularVariacao();
+    iniciarComparador();
+    ['#inf-preco', '#inf-taxa', '#inf-anos'].forEach((s) => $(s).addEventListener('input', calcularInflacao));
+    calcularInflacao();
+    iniciarOrcamento();
+    iniciarChecklist();
+    iniciarQuiz();
+  });
+})();
+</script>
+</body>
+</html>
