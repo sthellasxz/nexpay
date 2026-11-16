@@ -1,7 +1,8 @@
 /*
  * EcoFert — dashboard IoT simulado.
  * Telemetria com pequenas variações e um "Modo Demonstração" que percorre o ciclo completo.
- * Para usar dados reais, troque a função `lerTelemetria` por uma leitura do ESP32.
+ * Para usar dados reais, substitua a função `variarLeitura` por leituras do ESP32
+ * (por exemplo, via fetch periódico ao endpoint de telemetria).
  */
 (() => {
   'use strict';
