@@ -1,0 +1,11 @@
+# Site EcoFert (publicado a partir da pasta ecofert/ do repositório).
+# Quando o "Base directory" da Netlify aponta para ecofert, este arquivo é usado
+# no lugar do netlify.toml da raiz, que é do site NexPay.
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
