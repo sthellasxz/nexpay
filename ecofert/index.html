@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoFert — Do descarte à transformação</title>
+  <meta name="description" content="EcoFert: lixeira inteligente de compostagem doméstica, com sensores e automação, que transforma resíduos orgânicos em adubo.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/ecofert.css">
+</head>
+<body>
+
+  <a class="pular" href="#inicio">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="container topo-inner">
+      <a href="#inicio" class="marca" aria-label="EcoFert, início">
+        <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#244D35"/><path d="M18 44c0-18 10-28 28-28 0 18-10 28-28 28Z" fill="#DCEBDD"/><path d="M18 44 36 26" stroke="#6F9F78" stroke-width="3" stroke-linecap="round"/></svg>
+        <span>EcoFert</span>
+      </a>
+      <nav class="menu" aria-label="Seções da página">
+        <a href="#inicio" data-secao="inicio"><b>01</b>Início</a>
+        <a href="#processo" data-secao="processo"><b>02</b>Processo</a>
+        <a href="#guia" data-secao="guia"><b>03</b>Guia de resíduos</a>
+        <a href="#dashboard" data-secao="dashboard"><b>04</b>Dashboard</a>
+        <a href="#impacto" data-secao="impacto"><b>05</b>Impacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- 01. INÍCIO -->
+    <section id="inicio" class="secao hero">
+      <div class="container hero-grid">
+        <div class="hero-texto">
+          <span class="selo">Compostagem doméstica · IoT</span>
+          <h1>EcoFert — <span>Do descarte à transformação</span></h1>
+          <p class="lead">Tecnologia que dá um novo destino aos resíduos orgânicos.</p>
+          <p>Restos de comida costumam ir para aterros, onde se decompõem sem oxigênio e liberam metano. A EcoFert transforma esse resíduo em adubo dentro de casa, com automação e sem cheiro.</p>
+
+          <div class="acoes">
+            <a class="btn btn-primario" href="#processo">Conheça o Funcionamento</a>
+            <a class="btn btn-secundario" href="#guia">O que pode compostar?</a>
+          </div>
+
+          <ul class="problema" aria-label="Resumo do problema e da solução">
+            <li><b>Problema</b>Orgânico em aterro gera metano</li>
+            <li><b>Solução</b>Compostagem automática em casa</li>
+            <li><b>Resultado</b>Adubo pronto para plantas</li>
+          </ul>
+        </div>
+
+        <div class="hero-visual">
+          <div class="bin-wrap bin-hero" data-lixeira aria-label="Ilustração interativa da lixeira"></div>
+          <p class="dica-toque">Toque nos pontos para conhecer os componentes</p>
+          <ul class="legenda" id="legenda-hero"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02. PROCESSO INTERATIVO -->
+    <section id="processo" class="secao">
+      <div class="container">
+        <header class="cabecalho-secao">
+          <span class="num">02 · Processo</span>
+          <h2>O ciclo por dentro da lixeira</h2>
+          <p>Avance pelas cinco etapas e veja o que acontece em cada uma, e quais componentes trabalham.</p>
+        </header>
+
+        <div class="trilha" id="trilha" role="group" aria-label="Etapas do processo"></div>
+
+        <div class="processo-grid">
+          <div class="palco">
+            <div class="bin-wrap" data-lixeira aria-label="Lixeira na etapa atual"></div>
+          </div>
+
+          <article class="detalhe" id="detalhe" aria-live="polite">
+            <p class="etapa-num" id="etapa-num">Etapa 1 de 5</p>
+            <h3 id="etapa-titulo"></h3>
+            <p class="sub" id="etapa-sub"></p>
+            <p id="etapa-texto"></p>
+
+            <h4>Componentes acionados</h4>
+            <ul class="comps" id="etapa-comps"></ul>
+
+            <div class="controles">
+              <button type="button" class="btn btn-secundario btn-pequeno" id="prev">Anterior</button>
+              <span class="contador" id="contador">1 / 5</span>
+              <button type="button" class="btn btn-primario btn-pequeno" id="next">Próxima</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03. GUIA DE RESÍDUOS -->
+    <section id="guia" class="secao secao-alt">
+      <div class="container">
+        <header class="cabecalho-secao">
+          <span class="num">03 · Guia & educação</span>
+          <h2>O que pode e o que não pode</h2>
+          <p>Em dúvida antes de jogar? Pergunte ao EcoFert ou toque em um item da lista.</p>
+        </header>
+
+        <div class="busca">
+          <form id="form-busca" role="search">
+            <label for="busca">Posso jogar casca de banana?</label>
+            <div class="busca-linha">
+              <input id="busca" type="search" placeholder="Ex.: borra de café, casca de laranja, papel toalha…" autocomplete="off">
+              <button type="submit" class="btn btn-primario">Verificar</button>
+            </div>
+          </form>
+          <div class="sugestoes" id="sugestoes"></div>
+          <div class="resposta" id="resposta" aria-live="polite"></div>
+        </div>
+
+        <div class="colunas" id="colunas"></div>
+      </div>
+    </section>
+
+    <!-- 04. DASHBOARD IOT -->
+    <section id="dashboard" class="secao">
+      <div class="container">
+        <header class="cabecalho-secao">
+          <span class="num">04 · Monitoramento IoT</span>
+          <h2>Painel de controle vivo</h2>
+          <p>Telemetria em tempo real. Os valores abaixo são simulados. Em um equipamento real, viriam do ESP32.</p>
+        </header>
+
+        <div class="barra-status">
+          <span class="online"><i aria-hidden="true"></i>ESP32 on-line · Wi-Fi</span>
+          <span id="estagio-texto">Fase de Maturação: 70%</span>
+          <button type="button" class="btn btn-primario btn-pequeno" id="btn-demo">Modo Demonstração Simulada</button>
+        </div>
+
+        <div class="demo-fase" id="demo-fase" aria-live="polite"></div>
+
+        <div class="metricas">
+          <article class="metrica">
+            <p class="rotulo">Peso acumulado</p>
+            <p class="valor" id="m-peso">1,8 kg</p>
+            <p class="sensor">Célula de carga · HX711</p>
+          </article>
+          <article class="metrica">
+            <p class="rotulo">Temperatura interna</p>
+            <p class="valor" id="m-temp">31 °C</p>
+            <p class="sensor">Sensor DHT22</p>
+          </article>
+          <article class="metrica">
+            <p class="rotulo">Umidade</p>
+            <p class="valor" id="m-umid">58 %</p>
+            <p class="sensor">Sensor DHT22</p>
+          </article>
+          <article class="metrica">
+            <p class="rotulo">Nível e tampa</p>
+            <p class="valor" id="m-nivel">35 %</p>
+            <p class="sensor" id="m-tampa">Tampa fechada · Ultrassônico</p>
+          </article>
+        </div>
+
+        <div class="painel">
+          <article class="card grafico">
+            <div class="card-cab">
+              <h3>Histórico das últimas leituras</h3>
+              <div class="legenda-graf">
+                <span><i class="sw sw-temp"></i>Temperatura</span>
+                <span><i class="sw sw-umid"></i>Umidade</span>
+              </div>
+            </div>
+            <svg id="grafico" viewBox="0 0 600 200" role="img" aria-label="Gráfico de temperatura e umidade ao longo do tempo">
+              <g class="grade">
+                <line x1="14" y1="50" x2="586" y2="50"/>
+                <line x1="14" y1="100" x2="586" y2="100"/>
+                <line x1="14" y1="150" x2="586" y2="150"/>
+              </g>
+              <path id="linha-umid" class="linha linha-umid" d=""/>
+              <path id="linha-temp" class="linha linha-temp" d=""/>
+              <circle id="ponto-umid" r="5" class="ponto ponto-umid"/>
+              <circle id="ponto-temp" r="5" class="ponto ponto-temp"/>
+            </svg>
+            <div class="resumo-graf">
+              <div><span>Temp. mínima</span><b id="t-min">–</b></div>
+              <div><span>Temp. máxima</span><b id="t-max">–</b></div>
+              <div><span>Umid. mínima</span><b id="u-min">–</b></div>
+              <div><span>Umid. máxima</span><b id="u-max">–</b></div>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Maturação e atuadores</h3>
+            <div class="barra" role="progressbar" aria-label="Progresso da maturação" aria-valuemin="0" aria-valuemax="100" id="barra-prog">
+              <span id="barra-mat"></span>
+            </div>
+            <p class="tempo"><span id="mat-pct">70%</span> · <span id="tempo-restante"></span></p>
+
+            <ul class="atuadores" id="atuadores">
+              <li data-ator="tampa"><span>Tampa (servomotor)</span><b>Fechada</b></li>
+              <li data-ator="motor"><span>Lâminas (motor DC)</span><b>Desligado</b></li>
+              <li data-ator="aquec"><span>Aquecimento da massa</span><b>Desligado</b></li>
+            </ul>
+
+            <h4>Registro de eventos</h4>
+            <ol class="log" id="log"></ol>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05. IMPACTO AMBIENTAL & ODS -->
+    <section id="impacto" class="secao secao-alt">
+      <div class="container">
+        <header class="cabecalho-secao">
+          <span class="num">05 · Impacto & ODS</span>
+          <h2>Pequenas casas, grande efeito</h2>
+          <p>Estime quanto resíduo deixa de ir ao aterro e quanto metano deixa de ser emitido.</p>
+        </header>
+
+        <div class="imp-cards">
+          <article class="metrica">
+            <p class="rotulo">Orgânico desviado do aterro, por ano</p>
+            <p class="valor" id="imp-kg">78 kg</p>
+          </article>
+          <article class="metrica">
+            <p class="rotulo">CO₂ equivalente evitado</p>
+            <p class="valor" id="imp-co2">39 kg</p>
+          </article>
+          <article class="metrica">
+            <p class="rotulo">Metano (CH₄) evitado</p>
+            <p class="valor" id="imp-ch4">1,6 kg</p>
+          </article>
+        </div>
+
+        <div class="card calc">
+          <div>
+            <label for="kg-semana"><b>Quanto orgânico você descarta por semana?</b></label>
+            <input id="kg-semana" type="range" min="0.2" max="5" step="0.1" value="1.5">
+            <p class="saida" id="kg-sem-out">1,5 kg por semana</p>
+          </div>
+          <p class="nota">Estimativa ilustrativa. Os fatores de conversão estão em <code>js/dados.js</code> e devem ser substituídos por fontes oficiais antes de divulgar os números.</p>
+        </div>
+
+        <div class="ods">
+          <article class="card ods-card">
+            <div class="ods-num ods-11" aria-hidden="true">11</div>
+            <div>
+              <h3>ODS 11 · Cidades e Comunidades Sustentáveis</h3>
+              <p>Menos resíduo orgânico nos aterros e na coleta urbana. Cidades ganham espaço e reduzem a poluição do entorno.</p>
+            </div>
+          </article>
+          <article class="card ods-card">
+            <div class="ods-num ods-12" aria-hidden="true">12</div>
+            <div>
+              <h3>ODS 12 · Consumo e Produção Responsáveis</h3>
+              <p>Fecha o ciclo do resíduo: o que seria descarte vira insumo para a própria casa, com menos consumo de adubos.</p>
+            </div>
+          </article>
+        </div>
+
+        <article class="card">
+          <h3>Economia circular da EcoFert</h3>
+          <ol class="fluxo">
+            <li><span>1</span>Resíduo orgânico</li>
+            <li class="seta" aria-hidden="true">➔</li>
+            <li><span>2</span>Processamento inteligente</li>
+            <li class="seta" aria-hidden="true">➔</li>
+            <li><span>3</span>Composto orgânico</li>
+            <li class="seta" aria-hidden="true">➔</li>
+            <li><span>4</span>Nutrição do solo e da horta</li>
+          </ol>
+          <p class="nota">O adubo volta para as plantas, que voltam a gerar alimento e resíduo. O ciclo recomeça.</p>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="rodape">
+    <div class="container">
+      <p><b>EcoFert</b> · Projeto conceitual de compostagem doméstica com IoT.</p>
+    </div>
+  </footer>
+
+  <!-- Modal de detalhes do componente -->
+  <dialog id="modal-sensor" class="modal" aria-labelledby="modal-titulo">
+    <div class="modal-corpo">
+      <button type="button" class="fechar" data-fechar aria-label="Fechar">×</button>
+      <p class="modal-tag" id="modal-tag"></p>
+      <h3 id="modal-titulo"></h3>
+      <p><b>Função no sistema:</b> <span id="modal-funcao"></span></p>
+      <p><b>Quando é acionado:</b> <span id="modal-quando"></span></p>
+      <h4>Trecho de código</h4>
+      <pre><code id="modal-codigo"></code></pre>
+    </div>
+  </dialog>
+
+  <script src="js/dados.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
